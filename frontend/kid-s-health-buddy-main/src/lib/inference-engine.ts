@@ -237,7 +237,7 @@ export interface Symptoms {
   history_ulcer_recurrence: boolean;
   
   skin_rash: boolean;
-  skin_rash_location: string[]; 
+  skin_rash_location: string[] ;
   rash_type: 'Phỏng nước điển hình' | 'Mụn mủ' | 'Chấm xuất huyết' | 'Hoại tử' | 'Dát sẩn';
   rash_itchiness: boolean;
   rash_stages: 'Đồng đều' | 'Nhiều độ tuổi';
@@ -295,26 +295,30 @@ export interface LabTests {
   platelet_count: number;
   crp_level: number;
   ev71_result: 'Positive' | 'Negative' | 'NotDone';
-  other_enterovirus_result: 'Positive' | 'Negative' | 'NotDone';
-  viral_isolation_result: 'Positive' | 'Negative' | 'NotDone';
+  other_enterovirus_result: 'Positive' | 'Negative' | 'NotDone'; // Coxsackie A16, A6... ngoài EV71. 
+  viral_isolation_result: 'Positive' | 'Negative' | 'NotDone'; //Kết quả phân lập virus (Nuôi cấy)
   troponin_i: number;
-  chest_xray_edema: boolean; // Phù phổi cấp (Độ 4)
+  chest_xray_edema: boolean; // X-quang phổi có hình ảnh phù phổi không
 }
 
 // 4. Kết quả chẩn đoán & Phân độ
 export interface DiagnosisResult {
-  diagnosis_status: 'Ca xác định TCM' | 'Ca lâm sàng TCM' | 'Nghi ngờ bệnh khác' | 'Không đủ dữ liệu';
+  diagnosis_status: 'Ca xác định TCM' | 'Ca lâm sàng TCM' | 'Nghi ngờ bệnh khác' | 'Chưa đủ dữ liệu';
   clinical_form: 'Cấp tính' | 'Không điển hình (Chỉ loét miệng)' | 'Không điển hình (Thể kín)' | 'Tối cấp';
   current_grade: 'Độ 1' | 'Độ 2a' | 'Độ 2b (Nhóm 1)' | 'Độ 2b (Nhóm 2)' | 'Độ 3' | 'Độ 4';
-  priority_level: 'NORMAL' | 'WARNING' | 'CRITICAL';
+  priority_level: '3' | '2' | '1'; // 1 (cao nhất), 2 (trung bình), 3(thấp nhất).
+  complication_type: 'Thần kinh' | 'Tim mạch' | 'Hô hấp' ; //Loại biến chứng nghi ngờ
+  differential_alert: 'Ap tơ' | 'Thủy đậu' | 'Sốt xuất huyết/Nhiễm khuẩn huyết' | 'Viêm da mủ' | 'Dị ứng' ;
   treatment_location: string;
   transfer_needed: boolean;
+  warning_signs: string[] ; //Các dấu hiệu cảnh báo cần theo dõi sát (Ví dụ: Mạch > 130, Sốt cao khó hạ).
+  oxygen_support: boolean;
   recommended_next_step: string;
 }
 
 // 5. Hồ sơ bệnh nhân
 export interface DiagnosisRecord {
-  patient_id?: number;
+  patient_id?: string ;
   full_name: string;
   age_months: number;
   gender: string;
