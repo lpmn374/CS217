@@ -309,7 +309,7 @@ export interface DiagnosisResult {
   current_grade: 'Độ 1' | 'Độ 2a' | 'Độ 2b (Nhóm 1)' | 'Độ 2b (Nhóm 2)' | 'Độ 3' | 'Độ 4';
   priority_level: '3' | '2' | '1'; // 1 (cao nhất), 2 (trung bình), 3(thấp nhất).
   complication_type: 'Thần kinh' | 'Tim mạch' | 'Hô hấp' ; //Loại biến chứng nghi ngờ
-  differential_alert: 'Ap tơ' | 'Thủy đậu' | 'Sốt xuất huyết/Nhiễm khuẩn huyết' | 'Viêm da mủ' | 'Dị ứng' ;
+  differential_alert: 'Ap tơ' | 'Thủy đậu' | 'Sốt xuất huyết/Nhiễm khuẩn huyết' | 'Viêm da mủ' | 'Dị ứng' | 'Sốt phát ban';
   treatment_location: string;
   transfer_needed: boolean;
   warning_signs: string[] ; //Các dấu hiệu cảnh báo cần theo dõi sát (Ví dụ: Mạch > 130, Sốt cao khó hạ).
