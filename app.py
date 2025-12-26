@@ -238,231 +238,192 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from database_connect import connect_db
-import pymysql
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
-# --- BỘ SUY DIỄN (INFERENCE ENGINE) PHIÊN BẢN CẬP NHẬT BỘ Y TẾ 2024 ---
-def run_python_inference(symptoms, vitals, lab_tests, patient_info):
-    inference_steps = []
-    final_grade = "1"
-    diagnosis = "Ca lâm sàng TCM"
-    differential_diagnosis = None
-    treatment = "Điều trị ngoại trú, tái khám mỗi 1-2 ngày."
-    found_final = False
-
-    # Trích xuất dữ liệu đầu vào
-    age = int(patient_info.get('age') or 0)
-    hr = int(vitals.get('heartRate') or 0)
-    spo2 = float(vitals.get('spo2') or 100)
-    sys_bp = int(vitals.get('systolicBP') or 0)
-    dia_bp = int(vitals.get('diastolicBP') or 0)
-    pulse_pressure = sys_bp - dia_bp if sys_bp > 0 and dia_bp > 0 else 99
+def run_python_inference(data):
+    # Trích xuất dữ liệu từ cấu trúc form mới
+    s = data.get('symptoms', {})
+    v = data.get('vitals', {})
+    lab = data.get('labTests', {})
     
-    # Xử lý tri giác (Quy đổi AVPU sang GCS nếu cần)
-    gcs = int(vitals.get('comaGcs') or 15)
-    if vitals.get('avpu') in ['P', 'U']: gcs = 8 
+    # 1. LOGIC LOẠI TRỪ (DIFFERENTIAL DIAGNOSIS) - KHỚP SQL RULE_BASE
+    diff_result = None
+    
+    # A. Kiểm tra Thủy đậu (DIFF_VARICELLA)
+    if s.get('skin_rash') and s.get('rash_type') == "Phỏng nước điển hình" and \
+       s.get('skin_rash_location') == "Toàn thân" and s.get('rash_stages') == "Nhiều độ tuổi" and \
+       s.get('rash_itchiness') == True:
+        diff_result = {"alert": "Thủy đậu", "advice": "Nghi ngờ Thủy đậu (Varicella). Phỏng nước TCM thường khu trú và không ngứa."}
 
-    # --- 1. LUẬT CHẨN ĐOÁN PHÂN BIỆT ---
-    locations = symptoms.get('skin_rash_location', [])
-    if "Toàn thân" in locations:
-        differential_diagnosis = "Theo dõi Thủy đậu (Ban mọc toàn thân)"
-    elif "Sau tai" in locations:
-        differential_diagnosis = "Theo dõi Sốt phát ban (Ban mọc từ sau tai)"
-    elif symptoms.get('mouthUlcer') and not symptoms.get('rash') and symptoms.get('ulcerType') == "Atypical":
-        differential_diagnosis = "Viêm loét miệng Ap-tơ"
+    # B. Kiểm tra Não mô cầu (DIFF_MENINGOCOCCAL)
+    elif s.get('skin_rash') and s.get('rash_type') == "Hoại tử":
+        diff_result = {"alert": "Sốt xuất huyết/Nhiễm khuẩn huyết", "advice": "CẤP CỨU: Nghi ngờ nhiễm khuẩn huyết do Não mô cầu."}
 
-    # --- 2. HỆ THỐNG LUẬT PHÂN ĐỘ (THỨ TỰ ƯU TIÊN GIẢM DẦN) ---
-    RULES = [
-        {
-            "id": "GRADE_4", "name": "Độ 4 - Nguy kịch",
-            "check": lambda: (
-                vitals.get('respiratory_arrest') or 
-                spo2 < 92 or 
-                (sys_bp > 0 and (sys_bp < (70 if age < 12 else 80))) or
-                (sys_bp > 0 and pulse_pressure <= 25)
-            ),
-            "grade": "4", "treat": "CẤP CỨU: Hồi sức tích cực, hỗ trợ hô hấp tuần hoàn (Thở máy, vận mạch)."
-        },
-        {
-            "id": "GRADE_3", "name": "Độ 3 - Nặng",
-            "check": lambda: (
-                hr > 170 or 
-                vitals.get('mottled_skin') or 
-                vitals.get('respiratoryDistress') or 
-                spo2 < 94 or
-                (age < 12 and sys_bp > 100) or
-                (12 <= age < 24 and sys_bp > 110) or
-                (age >= 24 and sys_bp > 115)
-            ),
-            "grade": "3", "treat": "NGUY HIỂM: Nhập viện khoa Hồi sức cấp cứu, theo dõi sát mạch, HA mỗi giờ."
-        },
-        {
-            "id": "GRADE_2B_N2", "name": "Độ 2b Nhóm 2",
-            "check": lambda: (
-                symptoms.get('ataxia') or 
-                symptoms.get('nystagmus') or 
-                symptoms.get('limbWeakness') or 
-                symptoms.get('cranial_nerve_palsy') or
-                symptoms.get('muscleToneIncreased') or
-                gcs < 10 or
-                (symptoms.get('feverTemp', 0) >= 39 and symptoms.get('feverRefractory')) or
-                hr > 150
-            ),
-            "grade": "2b (Nhóm 2)", "treat": "Nhập viện điều trị nội trú. Chỉ định IVIG nếu triệu chứng thần kinh tiến triển."
-        },
-        {
-            "id": "GRADE_2B_N1", "name": "Độ 2b Nhóm 1",
-            "check": lambda: (
-                vitals.get('startleExam') or 
-                int(vitals.get('startleCount') or 0) >= 2 or
-                (int(vitals.get('startleCount') or 0) > 0 and (symptoms.get('lethargy') or hr > 130))
-            ),
-            "grade": "2b (Nhóm 1)", "treat": "Nhập viện điều trị. Theo dõi sát mạch và dấu hiệu giật mình."
-        },
-        {
-            "id": "GRADE_2A", "name": "Độ 2a",
-            "check": lambda: (
-                int(vitals.get('startleCount') or 0) > 0 or 
-                symptoms.get('feverDuration', 0) >= 2 or 
-                (symptoms.get('feverTemp', 0) >= 39 and (symptoms.get('vomiting') or symptoms.get('lethargy')))
-            ),
-            "grade": "2a", "treat": "Nhập viện theo dõi và điều trị nội trú nội khoa."
+    # C. Kiểm tra Sốt xuất huyết (DIFF_DENGUE)
+    elif s.get('skin_rash') and s.get('rash_type') in ["Chấm xuất huyết", "Bầm máu"] and \
+         s.get('fever_temp', 0) >= 39.0:
+        diff_result = {"alert": "Sốt xuất huyết/Nhiễm khuẩn huyết", "advice": "Nghi ngờ Sốt xuất huyết Dengue, cần làm thêm NS1Ag."}
+
+    # D. Kiểm tra Viêm da mủ (DIFF_PYODERMA)
+    elif s.get('skin_rash') and s.get('rash_type') == "Mụn mủ" and s.get('skin_rash_pain') == True:
+        diff_result = {"alert": "Viêm da mủ", "advice": "Nghi ngờ Viêm da mủ, kiểm tra tình trạng vệ sinh da."}
+
+    # E. Kiểm tra Dị ứng (DIFF_ALLERGY)
+    elif s.get('skin_rash') and s.get('rash_type') == "Hồng ban đa dạng" and \
+         s.get('rash_itchiness') == True and s.get('fever') == False:
+        diff_result = {"alert": "Dị ứng", "advice": "Nghi ngờ Dị ứng da."}
+
+    # F. Kiểm tra Sốt phát ban (DIFF_EXANTHEMA)
+    elif s.get('skin_rash') and s.get('rash_type') == "Hồng ban và sẩn" and \
+         s.get('fever') == True and s.get('post_auricular_lymph_nodes') == True:
+        diff_result = {"alert": "Sốt phát ban", "advice": "Nghi ngờ Sốt phát ban (Roseola/Rubella)."}
+
+    # G. Kiểm tra Ap-tơ (DIFF_APHTHOUS & DIFF_APHTHOUS_ALT)
+    elif s.get('mouth_ulcer') == True and s.get('history_ulcer_recurrence') == True:
+        if s.get('skin_rash') == False and s.get('ulcer_characteristics') == "Atypical":
+            diff_result = {"alert": "Ap tơ", "advice": "Theo dõi thêm, có khả năng là viêm loét miệng Ap-tơ."}
+        elif s.get('ulcer_characteristics') == "Typical":
+            diff_result = {"alert": "Ap tơ", "advice": "Loét miệng có tiền sử tái phát, theo dõi Ap-tơ."}
+
+    # --- TRẢ VỀ KẾT QUẢ LOẠI TRỪ NẾU CÓ ---
+    if diff_result:
+        return {
+            "status": "Differential",
+            "diagnosis": "Cần chẩn đoán phân biệt",
+            "differential": diff_result['alert'],
+            "treatment": diff_result['advice'],
+            "grade": "N/A"
         }
-    ]
 
-    for rule in RULES:
-        if not found_final and rule['check']():
-            final_grade = rule['grade']
-            treatment = rule['treat']
-            found_final = True
-            inference_steps.append({"ruleId": rule['id'], "activated": True, "description": rule['name']})
+    # 2. LOGIC PHÂN ĐỘ TCM (NẾU KHÔNG BỊ LOẠI TRỪ)
+    final_grade = "Độ 1"
+    treatment = "Theo dõi ngoại trú, tái khám mỗi 1-2 ngày."
+    
+    # Dữ liệu phục vụ phân độ
+    hr = v.get('heart_rate', 0)
+    temp = s.get('fever_temp', 0)
+    startle_h = v.get('startle_reflex_history', 0)
+    
+    # Phân độ 4: Nguy kịch
+    if v.get('apnea_gasping') or v.get('cyanosis') or v.get('unmeasurable_bp_pulse') or v.get('mottled_skin'):
+        final_grade = "Độ 4"
+        treatment = "CẤP CỨU HỒI SỨC TÍCH CỰC Tuyến cuối."
+    
+    # Phân độ 3: Biến chứng nặng
+    elif hr > 170 or v.get('respiratory_distress') or v.get('sweating') or v.get('systolic_bp', 0) > 140:
+        final_grade = "Độ 3"
+        treatment = "NHẬP VIỆN CẤP CỨU: Theo dõi sát mạch, HA, nhịp thở, tri giác."
+        
+    # Phân độ 2b - Nhóm 2: Sốt cao, mạch nhanh
+    elif temp >= 39.5 or hr > 150 or s.get('fever_refractory'):
+        final_grade = "Độ 2b (Nhóm 2)"
+        treatment = "Nhập viện điều trị nội trú, theo dõi sát diễn tiến."
+
+    # Phân độ 2b - Nhóm 1: Giật mình lúc khám hoặc dấu hiệu thần kinh
+    elif v.get('startle_reflex_exam') or v.get('ataxia') or v.get('limb_weakness') or v.get('nystagmus'):
+        final_grade = "Độ 2b (Nhóm 1)"
+        treatment = "Nhập viện điều trị nội trú (Khoa Nhi/Hồi sức Nhi)."
+
+    # Phân độ 2a: Giật mình bệnh sử hoặc sốt kéo dài
+    elif startle_h > 0 or s.get('fever_duration_days', 0) >= 2 or temp >= 39:
+        final_grade = "Độ 2a"
+        treatment = "Nhập viện theo dõi tại Bệnh viện Huyện hoặc Bệnh viện Tỉnh."
+
+    # Xác định chẩn đoán lâm sàng
+    diag_name = "Ca lâm sàng TCM"
+    if lab.get('ev71_result') == 'Positive': diag_name = "Ca xác định TCM (EV71+)"
+    elif lab.get('ev71_result') == 'NotDone': diag_name += " (Chưa có XN vi rút)"
 
     return {
-        "resultGrade": final_grade,
-        "diagnosis": diagnosis,
-        "differential": differential_diagnosis,
+        "status": "Success",
+        "diagnosis": diag_name,
+        "grade": final_grade,
         "treatment": treatment,
-        "inferenceSteps": inference_steps
+        "differential": None
     }
+
+# --- CÁC ROUTE API ---
 
 @app.route('/diagnose', methods=['POST'])
 def diagnose():
     data = request.json
-    symptoms = data.get('symptoms', {})
-    vitals = data.get('vitals', {})
-    patient_info = data.get('patientInfo', {})
-    lab_tests = data.get('labTests', {})
-
-    result = run_python_inference(symptoms, vitals, lab_tests, patient_info)
-
+    result = run_python_inference(data)
+    
     conn = connect_db()
     if conn:
         try:
             with conn.cursor() as cursor:
                 # 1. Lưu thông tin bệnh nhân
-                sql_p = "INSERT INTO tb_patient_info (full_name, gender, age_months, has_comorbidities) VALUES (%s, %s, %s, %s)"
-                cursor.execute(sql_p, (patient_info.get('name'), patient_info.get('gender'), patient_info.get('age'), 1 if patient_info.get('hasComorbidities') else 0))
+                sql_p = """INSERT INTO tb_patient_info 
+                           (full_name, age_months, gender, epidemiology_contact, has_comorbidities, comorbidities_detail) 
+                           VALUES (%s, %s, %s, %s, %s, %s)"""
+                cursor.execute(sql_p, (data.get('full_name'), data.get('age_months'), data.get('gender'), 
+                                       1 if data.get('epidemiology_contact') else 0, 
+                                       1 if data.get('has_comorbidities') else 0, 
+                                       data.get('comorbidities_detail')))
                 p_id = conn.insert_id()
 
-                # 2. Lưu kết quả chẩn đoán cuối cùng
-                sql_r = """INSERT INTO tb_final_results 
-                           (patient_id, diagnosis_status, current_grade, treatment_location, differential_alert) 
-                           VALUES (%s, %s, %s, %s, %s)"""
-                cursor.execute(sql_r, (p_id, result['diagnosis'], result['resultGrade'], result['treatment'], result['differential']))
-                
-                # 3. Lưu sinh hiệu (để phục vụ lịch sử)
-                sql_v = "INSERT INTO tb_vital_signs_neuro (patient_id, heart_rate, spo2, systolic_bp) VALUES (%s, %s, %s, %s)"
-                cursor.execute(sql_v, (p_id, vitals.get('heartRate'), vitals.get('spo2'), vitals.get('systolicBP')))
+                # 2. Lưu lâm sàng & xét nghiệm
+                sql_v = """INSERT INTO tb_vital_signs_neuro 
+                           (patient_id, fever_temp, heart_rate, spo2, startle_reflex_history, ev71_result) 
+                           VALUES (%s, %s, %s, %s, %s, %s)"""
+                cursor.execute(sql_v, (p_id, data['symptoms'].get('fever_temp'), data['vitals'].get('heart_rate'), 
+                                       data['vitals'].get('spo2'), data['vitals'].get('startle_reflex_history'), 
+                                       data['labTests'].get('ev71_result')))
 
+                # 3. Lưu kết quả chẩn đoán
+                sql_g = """INSERT INTO tb_grading_result 
+                           (patient_id, diagnosis_status, current_grade, differential_alert, recommended_next_step) 
+                           VALUES (%s, %s, %s, %s, %s)"""
+                cursor.execute(sql_g, (p_id, result['diagnosis'], result['grade'], 
+                                       result['differential'], result['treatment']))
+                
                 conn.commit()
+                result['patientId'] = p_id
         except Exception as e:
-            print(f"SQL Error: {e}")
+            print(f"Lỗi Database: {e}")
+            conn.rollback()
         finally:
             conn.close()
-
     return jsonify(result)
 
-# ... Các route history và delete giữ nguyên như file trước ...
-@app.route('/save_patient', methods=['POST'])
-def save_patient():
-    # Hàm này dùng để lưu lại bản ghi sau khi đã có kết quả chẩn đoán
-    return jsonify({"status": "success", "message": "Đã lưu bản ghi chẩn đoán"})
-
 @app.route('/history', methods=['GET'])
-def get_all_history():
+def get_history():
     conn = connect_db()
-    if conn:
-        try:
-            with conn.cursor() as cursor:
-                # Sử dụng LEFT JOIN để lấy dữ liệu từ cả 2 bảng thông qua patient_id
-                sql = """
-                    SELECT 
-                        p.patient_id as id, 
-                        p.full_name as childName, 
-                        p.gender as childGender, 
-                        p.age_months as childAgeMonths,
-                        p.has_comorbidities as hasComorbidities,
-                        p.result_grade as resultGrade,
-                        p.created_at as createdAt,
-                        v.heart_rate as heartRate, 
-                        v.spo2 as spo2
-                    FROM tb_patient_info p
-                    LEFT JOIN tb_vital_signs_neuro v ON p.patient_id = v.patient_id
-                    ORDER BY p.created_at DESC
-                """
-                cursor.execute(sql)
-                rows = cursor.fetchall()
-                
-                # CHUẨN HÓA DỮ LIỆU: Đảm bảo React luôn nhận được object hợp lệ
-                for row in rows:
-                    # Chuyển đổi createdAt sang chuỗi ISO nếu cần
-                    if row['createdAt']:
-                        row['createdAt'] = row['createdAt'].isoformat()
+    if not conn: return jsonify([])
+    try:
+        with conn.cursor() as cursor:
+            sql = """
+                SELECT p.patient_id as id, p.full_name as name, p.age_months as age, p.created_at as date,
+                       g.current_grade as grade, g.diagnosis_status as diagnosis, g.recommended_next_step as treatment
+                FROM tb_patient_info p
+                JOIN tb_grading_result g ON p.patient_id = g.patient_id
+                ORDER BY p.created_at DESC
+            """
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            for r in rows:
+                if r['date']: r['date'] = r['date'].strftime("%Y-%m-%d %H:%M")
+            return jsonify(rows)
+    finally:
+        conn.close()
 
-                    # 2. LẤY GIÁ TRỊ THẬT: Thay vì gán cứng '1', ta lấy từ cột resultGrade của SQL
-                    # Nếu cột đó trống (ca cũ), mới mặc định là '1'
-                    final_grade = str(row.get('resultGrade') or '1')
-
-                    # Gán các object mặc định để tránh lỗi trắng trang trong React
-                    row['result'] = {
-                        'resultGrade': final_grade, 
-                        'isClinicalCase': True,
-                        'treatment': 'Theo dõi theo hướng dẫn y tế.'
-                    }
-                    row['symptoms'] = {
-                        'mouthUlcer': False, 'rash': False, 'highFever': False,
-                        'feverOver2Days': False, 'vomiting': False, 'lethargy': False, 'limbWeakness': False
-                    }
-                    row['vitals'] = {
-                        'heartRate': row.get('heartRate', 0) or 0,
-                        'spo2': row.get('spo2', 0) or 0,
-                        'startleCount': 0,
-                        'isRestingNoFever': False
-                    }
-                
-                return jsonify(rows)
-        finally:
-            conn.close()
-    return jsonify([])
-
-@app.route('/delete_patient/<id>', methods=['DELETE'])
-def delete_patient(id):
+@app.route('/delete/<int:patient_id>', methods=['DELETE'])
+def delete_patient(patient_id):
     conn = connect_db()
-    if conn:
-        try:
-            with conn.cursor() as cursor:
-                # Nếu bạn đã làm Bước 1 (CASCADE) ở trên, chỉ cần 1 lệnh này là đủ:
-                sql = "DELETE FROM tb_patient_info WHERE patient_id = %s"
-                cursor.execute(sql, (id,))
-                conn.commit()
-                return jsonify({"status": "success", "message": f"Đã xóa ca bệnh {id}"})
-        except Exception as e:
-            return jsonify({"status": "error", "message": str(e)}), 500
-        finally:
-            conn.close()
-    return jsonify({"status": "error", "message": "Không thể kết nối CSDL"}), 500
+    if not conn: return jsonify({"status": "error"}), 500
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM tb_patient_info WHERE patient_id = %s", (patient_id,))
+            conn.commit()
+            return jsonify({"status": "success", "message": f"Đã xóa ca bệnh ID: {patient_id}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
