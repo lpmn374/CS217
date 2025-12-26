@@ -287,11 +287,11 @@ const COMMON_COMORBIDITIES = [
   "Suy giảm miễn dịch", "Động kinh", "Béo phì"
 ];
 
-const RASH_LOCATIONS = [
-  { id: 'classic', label: 'Lòng bàn tay, chân, gối, mông' },
-  { id: 'whole_body', label: 'Toàn thân' },
-  { id: 'behind_ears', label: 'Sau tai' },
-];
+// const RASH_LOCATIONS = [
+//   { id: 'classic', label: 'Lòng bàn tay, chân, gối, mông' },
+//   { id: 'whole_body', label: 'Toàn thân' },
+//   { id: 'behind_ears', label: 'Sau tai' },
+// ];
 
 interface DiagnosisFormProps {
   onSubmit: (data: DiagnosisRecord) => void;
@@ -317,7 +317,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       ulcer_characteristics: 'Typical',
       history_ulcer_recurrence: false,
       skin_rash: false,
-      skin_rash_location: [],
+      skin_rash_location: 'Lòng bàn tay, chân, gối, khuỷu, mông',
       rash_type: 'Phỏng nước điển hình',
       rash_itchiness: false,
       rash_stages: 'Đồng đều',
@@ -490,6 +490,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                     <SelectItem value="Phỏng nước điển hình">Phỏng nước điển hình</SelectItem>
                     <SelectItem value="Mụn mủ">Mụn mủ</SelectItem>
                     <SelectItem value="Chấm xuất huyết">Chấm xuất huyết</SelectItem>
+                    <SelectItem value="Bầm máu">Bầm máu</SelectItem>
                     <SelectItem value="Hoại tử">Hoại tử</SelectItem>
                     <SelectItem value="Dát sẩn">Dát sẩn</SelectItem>
                   </SelectContent>
@@ -498,7 +499,9 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                 <Select value={formData.symptoms.skin_rash_location[0] || ""} onValueChange={v => updateSymptom('skin_rash_location', [v])}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Chọn vị trí chính" /></SelectTrigger>
                   <SelectContent>
-                    {RASH_LOCATIONS.map(loc => <SelectItem key={loc.id} value={loc.label}>{loc.label}</SelectItem>)}
+                    <SelectItem value="Lòng bàn tay, chân, gối, khuỷu, mông">Lòng bàn tay, chân, gối, khuỷu, mông</SelectItem>
+                    <SelectItem value="Toàn thân">Toàn thân</SelectItem>
+                    <SelectItem value="Sau tai">Sau tai</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
