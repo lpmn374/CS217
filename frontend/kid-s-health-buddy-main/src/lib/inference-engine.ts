@@ -237,8 +237,8 @@ export interface Symptoms {
   history_ulcer_recurrence: boolean;
   
   skin_rash: boolean;
-  skin_rash_location: string[] ;
-  rash_type: 'Phỏng nước điển hình' | 'Mụn mủ' | 'Chấm xuất huyết' | 'Hoại tử' | 'Dát sẩn';
+  skin_rash_location: 'Lòng bàn tay, chân, gối, khuỷu, mông' | 'Toàn thân'| 'Sau tai' ;
+  rash_type: 'Phỏng nước điển hình' | 'Mụn mủ' | 'Chấm xuất huyết' | 'Bầm máu' | 'Hoại tử' | 'Dát sẩn';
   rash_itchiness: boolean;
   rash_stages: 'Đồng đều' | 'Nhiều độ tuổi';
   skin_rash_pain: boolean;
