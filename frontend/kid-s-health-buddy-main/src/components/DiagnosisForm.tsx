@@ -322,6 +322,8 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       rash_itchiness: false,
       rash_stages: 'Đồng đều',
       skin_rash_pain: false,
+      post_auricular_lymph_nodes: false,
+
       vomiting: false,
       lethargy: false,
       sleep_disturbance: false,
@@ -487,12 +489,13 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                 <Select value={formData.symptoms.rash_type} onValueChange={v => updateSymptom('rash_type', v)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Phỏng nước điển hình">Phỏng nước điển hình</SelectItem>
+                    <SelectItem value="Phỏng nước điển hình">Phỏng nước điển hình (Mụn nước)</SelectItem>
                     <SelectItem value="Mụn mủ">Mụn mủ</SelectItem>
                     <SelectItem value="Chấm xuất huyết">Chấm xuất huyết</SelectItem>
                     <SelectItem value="Bầm máu">Bầm máu</SelectItem>
                     <SelectItem value="Hoại tử">Hoại tử</SelectItem>
-                    <SelectItem value="Dát sẩn">Dát sẩn</SelectItem>
+                    <SelectItem value="Hồng ban và sẩn">Hồng ban xen kẽ ít dạng sẩn (Vết như muỗi chích)</SelectItem>
+                    <SelectItem value="Hồng ban đa dạng">Hồng ban đa dạng</SelectItem>
                   </SelectContent>
                 </Select>
                 <Label className="text-[10px] font-bold">Vị trí ban:</Label>
@@ -501,7 +504,6 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                   <SelectContent>
                     <SelectItem value="Lòng bàn tay, chân, gối, khuỷu, mông">Lòng bàn tay, chân, gối, khuỷu, mông</SelectItem>
                     <SelectItem value="Toàn thân">Toàn thân</SelectItem>
-                    <SelectItem value="Sau tai">Sau tai</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -518,6 +520,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
               </div>
             </div>
           )}
+          <SymptomToggle label="Có nổi hạch sau tai" checked={formData.symptoms.post_auricular_lymph_nodes} onChange={v => updateSymptom('post_auricular_lymph_nodes', v)} />
         </CardContent>
       </Card>
 
