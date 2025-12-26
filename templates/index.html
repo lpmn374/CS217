@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ Chuyên Gia Chẩn Đoán TCM</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="number"], input[type="text"], select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .section-header { background: #f0f0f0; padding: 10px; border-left: 5px solid #007bff; margin-top: 20px; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Hệ Thống Suy Diễn Bệnh Tay Chân Miệng (TCM)</h1>
+    <form action="/diagnose" method="POST">
+        
+        <div class="section-header">1. Thông tin Bệnh nhân & Dịch tễ</div>
+	<div class="form-group">
+   		 <label for="full_name">Họ và Tên Bệnh nhân:</label>
+    		<input type="text" id="full_name" name="full_name" required value="Bé M.T">
+	</div>
+	<div class="form-group">
+    		<label for="gender">Giới tính:</label>
+   		 <select id="gender" name="gender">
+			<option value="Nam">Nam</option>
+			<option value="Nữ">Nữ</option>
+			<option value="Khác">Khác</option>
+		</select>
+	</div>
+        <div class="form-group">
+            <label for="age_months">Tuổi (tháng):</label>
+            <input type="number" id="age_months" name="age_months" required min="1" value="36">
+        </div>
+        <div class="form-group">
+            <label for="has_comorbidities">Có bệnh nền (Tim bẩm sinh, suy giảm miễn dịch...)?</label>
+            <select id="has_comorbidities" name="has_comorbidities">
+                <option value="0">Không (False)</option>
+                <option value="1">Có (True)</option>
+            </select>
+        </div>
+
+        <div class="section-header">2. Triệu chứng Chẩn đoán & Sinh hiệu</div>
+        <div class="form-group">
+            <label for="mouth_ulcer">Loét miệng / Loét họng?</label>
+            <select id="mouth_ulcer" name="mouth_ulcer">
+                <option value="1">Có</option>
+                <option value="0">Không</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="skin_rash">Phát ban/Phỏng nước điển hình (Tay/Chân/Mông)?</label>
+            <select id="skin_rash" name="skin_rash">
+                <option value="1">Có</option>
+                <option value="0">Không</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="heart_rate">Mạch (lần/phút):</label>
+            <input type="number" id="heart_rate" name="heart_rate" value="130" required>
+        </div>
+        <div class="form-group">
+            <label for="fever_temp">Nhiệt độ (Độ C):</label>
+            <input type="number" id="fever_temp" name="fever_temp" step="0.1" value="37.5">
+        </div>
+
+        <div class="section-header">3. Dấu hiệu Thần kinh (Phân độ)</div>
+        <div class="form-group">
+            <label for="startle_reflex_history">Giật mình chới với (tần suất trong 30 phút gần nhất):</label>
+            <input type="number" id="startle_reflex_history" name="startle_reflex_history" min="0" value="0">
+        </div>
+        <div class="form-group">
+            <label for="ataxia">Thất điều (đi loạng choạng, run chi)?</label>
+            <select id="ataxia" name="ataxia">
+                <option value="0">Không</option>
+                <option value="1">Có (TRUE)</option>
+            </select>
+        </div>
+        
+        <button type="submit">Thực hiện Suy diễn (Chẩn đoán & Xử trí)</button>
+    </form>
+</body>
+</html>

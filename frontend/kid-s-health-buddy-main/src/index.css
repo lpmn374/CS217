@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* HFMD Diagnostic System - Medical Theme
+   Soft Blue + Mint Green + Clean White
+   All colors in HSL format
+*/
+
+@layer base {
+  :root {
+    /* Core Medical Theme */
+    --background: 210 50% 98%;
+    --foreground: 210 40% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 40% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 40% 15%;
+
+    /* Soft Blue - Primary */
+    --primary: 210 80% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Mint Green - Secondary */
+    --secondary: 150 40% 94%;
+    --secondary-foreground: 150 40% 25%;
+
+    --muted: 210 30% 95%;
+    --muted-foreground: 210 20% 45%;
+
+    /* Accent - Mint Green */
+    --accent: 150 50% 88%;
+    --accent-foreground: 150 50% 20%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 30% 88%;
+    --input: 210 30% 92%;
+    --ring: 210 80% 55%;
+
+    --radius: 0.75rem;
+
+    /* Medical Grade Colors */
+    --grade-1: 145 60% 45%;
+    --grade-1-bg: 145 60% 94%;
+    --grade-2a: 45 90% 50%;
+    --grade-2a-bg: 45 90% 94%;
+    --grade-2b: 30 90% 50%;
+    --grade-2b-bg: 30 90% 94%;
+    --grade-3: 0 75% 55%;
+    --grade-3-bg: 0 75% 95%;
+    --grade-4: 0 85% 45%;
+    --grade-4-bg: 0 85% 94%;
+
+    /* Flowchart */
+    --node-active: 150 60% 45%;
+    --node-inactive: 210 20% 70%;
+    --node-final: 210 80% 55%;
+
+    /* Sidebar */
+    --sidebar-background: 210 50% 97%;
+    --sidebar-foreground: 210 40% 25%;
+    --sidebar-primary: 210 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 40% 92%;
+    --sidebar-accent-foreground: 150 40% 20%;
+    --sidebar-border: 210 30% 88%;
+    --sidebar-ring: 210 80% 55%;
+  }
+
+  .dark {
+    --background: 210 40% 8%;
+    --foreground: 210 30% 95%;
+
+    --card: 210 40% 12%;
+    --card-foreground: 210 30% 95%;
+
+    --popover: 210 40% 12%;
+    --popover-foreground: 210 30% 95%;
+
+    --primary: 210 70% 60%;
+    --primary-foreground: 210 40% 8%;
+
+    --secondary: 150 30% 20%;
+    --secondary-foreground: 150 30% 90%;
+
+    --muted: 210 30% 18%;
+    --muted-foreground: 210 20% 65%;
+
+    --accent: 150 40% 25%;
+    --accent-foreground: 150 40% 90%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 30% 22%;
+    --input: 210 30% 22%;
+    --ring: 210 70% 60%;
+
+    --grade-1: 145 50% 50%;
+    --grade-1-bg: 145 50% 15%;
+    --grade-2a: 45 80% 55%;
+    --grade-2a-bg: 45 80% 15%;
+    --grade-2b: 30 80% 55%;
+    --grade-2b-bg: 30 80% 15%;
+    --grade-3: 0 65% 55%;
+    --grade-3-bg: 0 65% 15%;
+    --grade-4: 0 75% 50%;
+    --grade-4-bg: 0 75% 15%;
+
+    --node-active: 150 50% 50%;
+    --node-inactive: 210 20% 40%;
+    --node-final: 210 70% 60%;
+
+    --sidebar-background: 210 40% 10%;
+    --sidebar-foreground: 210 30% 90%;
+    --sidebar-primary: 210 70% 60%;
+    --sidebar-primary-foreground: 210 40% 8%;
+    --sidebar-accent: 150 30% 20%;
+    --sidebar-accent-foreground: 150 30% 90%;
+    --sidebar-border: 210 30% 22%;
+    --sidebar-ring: 210 70% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .grade-1 {
+    @apply bg-[hsl(var(--grade-1-bg))] text-[hsl(var(--grade-1))] border-[hsl(var(--grade-1))];
+  }
+  .grade-2a {
+    @apply bg-[hsl(var(--grade-2a-bg))] text-[hsl(var(--grade-2a))] border-[hsl(var(--grade-2a))];
+  }
+  .grade-2b {
+    @apply bg-[hsl(var(--grade-2b-bg))] text-[hsl(var(--grade-2b))] border-[hsl(var(--grade-2b))];
+  }
+  .grade-3 {
+    @apply bg-[hsl(var(--grade-3-bg))] text-[hsl(var(--grade-3))] border-[hsl(var(--grade-3))];
+  }
+  .grade-4 {
+    @apply bg-[hsl(var(--grade-4-bg))] text-[hsl(var(--grade-4))] border-[hsl(var(--grade-4))];
+  }
+}

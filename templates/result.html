@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Kết Quả Suy Diễn TCM</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result-box { border: 1px solid #ccc; padding: 20px; margin-top: 20px; background-color: #f9f9f9; }
+        .success { color: green; font-weight: bold; }
+        .danger { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Kết Quả Dữ Kiện Đầu Vào</h1>
+    
+    <p>Dữ liệu đã được nhận thành công từ form.</p>
+    
+    <div class="result-box">
+        <h2>Dữ kiện Bệnh nhân (Facts)</h2>
+        <p><strong>Tuổi (tháng):</strong> {{ patient_data.age_months }}</p>
+        <p><strong>Có bệnh nền:</strong> {{ patient_data.has_comorbidities }}</p>
+        <p><strong>Mạch (lần/phút):</strong> {{ patient_data.heart_rate }}</p>
+        <p><strong>Giật mình (lần/30p):</strong> {{ patient_data.startle_reflex_history }}</p>
+        <hr>
+        
+        <h2>Kết Quả Suy Diễn (Chưa xử lý logic)</h2>
+        <p class="danger">Phần Bộ Suy diễn (Forward Chaining) sẽ được lập trình ở bước tiếp theo.</p>
+    </div>
+    
+    <p><a href="/">Quay lại Form Nhập liệu</a></p>
+</body>
+</html>
