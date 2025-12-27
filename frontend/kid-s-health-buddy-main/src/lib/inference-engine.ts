@@ -243,6 +243,7 @@ export interface Symptoms {
   rash_stages: 'Đồng đều' | 'Nhiều độ tuổi';
   skin_rash_pain: boolean;
   post_auricular_lymph_nodes: boolean;
+  mucosal_bleeding: boolean;
   
   vomiting: boolean;
   lethargy: boolean; // Lừ đừ
@@ -263,6 +264,7 @@ export interface Vitals {
   diastolic_bp: number; 
   pulse_pressure: number; // Hiệu áp (Sẽ được tính: Systolic - Diastolic)
   unmeasurable_bp_pulse: boolean; // Mạch không bắt được, HA không đo được (Độ 4)
+  capillary_refill_time: number;  // Thời gian đổ đầy mao mạch (giây)
   respiratory_rate_high: boolean;
   stridor: boolean; //Thở rít thanh quản.
   spo2: number;
@@ -291,14 +293,14 @@ export interface Vitals {
 
 // 3. Nhóm Xét nghiệm (LabTests)
 export interface LabTests {
-  wbc_count: number;
-  blood_glucose: number;
-  platelet_count: number;
-  crp_level: number;
+  // wbc_count: number;
+  // blood_glucose: number;
+  // platelet_count: number;
+  // crp_level: number;
   ev71_result: 'Positive' | 'Negative' | 'NotDone';
   other_enterovirus_result: 'Positive' | 'Negative' | 'NotDone'; // Coxsackie A16, A6... ngoài EV71. 
   viral_isolation_result: 'Positive' | 'Negative' | 'NotDone'; //Kết quả phân lập virus (Nuôi cấy)
-  troponin_i: number;
+  // troponin_i: number;
   chest_xray_edema: boolean; // X-quang phổi có hình ảnh phù phổi không
 }
 
@@ -307,11 +309,13 @@ export interface DiagnosisResult {
   diagnosis_status: 'Ca xác định TCM' | 'Ca lâm sàng TCM' | 'Nghi ngờ bệnh khác' | 'Chưa đủ dữ liệu';
   clinical_form: 'Cấp tính' | 'Không điển hình (Chỉ loét miệng)' | 'Không điển hình (Thể kín)' | 'Tối cấp';
   current_grade: 'Độ 1' | 'Độ 2a' | 'Độ 2b (Nhóm 1)' | 'Độ 2b (Nhóm 2)' | 'Độ 3' | 'Độ 4';
-  priority_level: '3' | '2' | '1'; // 1 (cao nhất), 2 (trung bình), 3(thấp nhất).
+  priority_level: '1' | '2' | '3'; // 1 (cao nhất), 2 (trung bình), 3(thấp nhất).
   complication_type: 'Thần kinh' | 'Tim mạch' | 'Hô hấp' ; //Loại biến chứng nghi ngờ
   differential_alert: 'Ap tơ' | 'Thủy đậu' | 'Sốt xuất huyết/Nhiễm khuẩn huyết' | 'Viêm da mủ' | 'Dị ứng' | 'Sốt phát ban';
+  primary_evidence: string ;
   treatment_location: string;
   transfer_needed: boolean;
+  current_facility_level: string;
   warning_signs: string[] ; //Các dấu hiệu cảnh báo cần theo dõi sát (Ví dụ: Mạch > 130, Sốt cao khó hạ).
   oxygen_support: boolean;
   recommended_next_step: string;
