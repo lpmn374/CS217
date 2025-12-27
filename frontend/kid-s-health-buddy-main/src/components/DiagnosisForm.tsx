@@ -309,7 +309,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
     comorbidities_detail: '',
     symptoms: {
       fever: false,
-      fever_temp: 37,
+      fever_temp: 39,
       fever_duration_days: 0,
       fever_refractory: false,
       symptom_progression_speed: 'Normal',
@@ -323,6 +323,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       rash_stages: 'Đồng đều',
       skin_rash_pain: false,
       post_auricular_lymph_nodes: false,
+      mucosal_bleeding: false,
 
       vomiting: false,
       lethargy: false,
@@ -333,13 +334,14 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       fatigue: false,
     },
     vitals: {
-      heart_rate: 100,
-      respiratory_rate: 20,
+      heart_rate: undefined,
+      respiratory_rate: undefined,
       respiratory_distress: false,
-      systolic_bp: 100,
-      diastolic_bp: 70,
+      systolic_bp: 95,
+      diastolic_bp: 65,
       pulse_pressure: 30,
       unmeasurable_bp_pulse: false,
+      capillary_refill_time: undefined,
       respiratory_rate_high: false,
       cranial_nerve_palsy: false,
       stridor: false,
@@ -359,11 +361,11 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       startle_reflex_exam: false,
     },
     labTests: {
-      wbc_count: undefined,
-      blood_glucose: undefined,
-      platelet_count: undefined,
-      crp_level: undefined,
-      troponin_i: undefined,
+      // wbc_count: undefined,
+      // blood_glucose: undefined,
+      // platelet_count: undefined,
+      // crp_level: undefined,
+      // troponin_i: undefined,
       ev71_result: 'NotDone',
       other_enterovirus_result: 'NotDone',
       viral_isolation_result: 'NotDone',
@@ -521,6 +523,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
             </div>
           )}
           <SymptomToggle label="Có nổi hạch sau tai" checked={formData.symptoms.post_auricular_lymph_nodes} onChange={v => updateSymptom('post_auricular_lymph_nodes', v)} />
+          <SymptomToggle label="Có xuất huyết niêm mạc" checked={formData.symptoms.mucosal_bleeding} onChange={v => updateSymptom('mucosal_bleeding', v)} />
         </CardContent>
       </Card>
 
@@ -540,6 +543,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                 {formData.vitals.pulse_pressure}
               </div>
             </div>
+            <div className="space-y-1"><Label className="text-xs">Thời gian đổ đầy mao mạch (giây)</Label><Input type="number" value={formData.vitals.capillary_refill_time} onChange={e => updateVital('capillary_refill_time', parseInt(e.target.value) || 0)} /></div>
           </div>
           <div className="bg-red-50 p-3 rounded-lg space-y-1 border border-red-100">
             <SymptomToggle label="Mạch/HA không đo được" checked={formData.vitals.unmeasurable_bp_pulse} onChange={v => updateVital('unmeasurable_bp_pulse', v)} />
@@ -595,13 +599,13 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       <Card className="shadow-sm border-t-4 border-t-slate-700">
         <CardHeader><CardTitle className="flex items-center gap-2 text-md font-bold uppercase"><Beaker size={18} /> Xét nghiệm (Lab)</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          {/* <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label className="text-[11px]">Bạch cầu (G/L)</Label><Input type="number" step="0.1" value={formData.labTests.wbc_count} onChange={e => updateLab('wbc_count', parseFloat(e.target.value) || 0)} /></div>
             <div className="space-y-1"><Label className="text-[11px]">Đường huyết (mg%)</Label><Input type="number" value={formData.labTests.blood_glucose} onChange={e => updateLab('blood_glucose', parseFloat(e.target.value) || 0)} /></div>
             <div className="space-y-1"><Label className="text-[11px]">Tiểu cầu (G/L)</Label><Input type="number" value={formData.labTests.platelet_count} onChange={e => updateLab('platelet_count', parseFloat(e.target.value) || 0)} /></div>
             <div className="space-y-1"><Label className="text-[11px]">CRP (mg/L)</Label><Input type="number" value={formData.labTests.crp_level} onChange={e => updateLab('crp_level', parseFloat(e.target.value) || 0)} /></div>
             <div className="space-y-1"><Label className="text-[11px]">Chỉ số Troponin I</Label><Input type="number" step="0.001" value={formData.labTests.troponin_i} onChange={e => updateLab('troponin_i', parseFloat(e.target.value) || 0)} /></div>
-          </div>
+          </div> */}
           <div className="space-y-2 border-t pt-2">
             <div className="space-y-1"><Label className="text-[10px] font-bold">Xét nghiệm EV71</Label>
               <Select value={formData.labTests.ev71_result} onValueChange={v => updateLab('ev71_result', v)}>
