@@ -237,191 +237,150 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from database_connect import connect_db
-from datetime import datetime
+import pymysql
+import re
 
 app = Flask(__name__)
 CORS(app)
 
-def run_python_inference(data):
-    # Trích xuất dữ liệu từ cấu trúc form mới
-    s = data.get('symptoms', {})
-    v = data.get('vitals', {})
-    lab = data.get('labTests', {})
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',
+    'database': 'hfdm_system',
+    'charset': 'utf8mb4',
+    'cursorclass': pymysql.cursors.DictCursor
+}
+
+def connect_db():
+    try: return pymysql.connect(**DB_CONFIG)
+    except Exception as e: return None
+
+def run_python_inference(rules, context, step_mode=False):
+    """
+    step_mode=True: Dừng ngay khi thỏa mãn 1 luật (Dùng cho Phân độ hoặc Phân loại đơn nhất)
+    step_mode=False: Chạy tất cả các luật thỏa mãn (Dùng cho Biến chứng, Cận lâm sàng)
+    """
+    executed_any = False
+    # Sắp xếp theo priority giảm dần
+    sorted_rules = sorted(rules, key=lambda x: x['priority'], reverse=True)
     
-    # 1. LOGIC LOẠI TRỪ (DIFFERENTIAL DIAGNOSIS) - KHỚP SQL RULE_BASE
-    diff_result = None
-    
-    # A. Kiểm tra Thủy đậu (DIFF_VARICELLA)
-    if s.get('skin_rash') and s.get('rash_type') == "Phỏng nước điển hình" and \
-       s.get('skin_rash_location') == "Toàn thân" and s.get('rash_stages') == "Nhiều độ tuổi" and \
-       s.get('rash_itchiness') == True:
-        diff_result = {"alert": "Thủy đậu", "advice": "Nghi ngờ Thủy đậu (Varicella). Phỏng nước TCM thường khu trú và không ngứa."}
+    for r in sorted_rules:
+        # Chuẩn hóa cú pháp SQL sang Python
+        cond = r['condition_if'].replace('AND', 'and').replace('OR', 'or').replace('None', 'None')
+        cond = re.sub(r'(?<![<>!])=(?!=)', '==', cond)
+        if 'IN (' in cond or 'in (' in cond:
+            cond = re.sub(r'in\s*\((.*?)\)', r'in [\1]', cond, flags=re.IGNORECASE)
 
-    # B. Kiểm tra Não mô cầu (DIFF_MENINGOCOCCAL)
-    elif s.get('skin_rash') and s.get('rash_type') == "Hoại tử":
-        diff_result = {"alert": "Sốt xuất huyết/Nhiễm khuẩn huyết", "advice": "CẤP CỨU: Nghi ngờ nhiễm khuẩn huyết do Não mô cầu."}
-
-    # C. Kiểm tra Sốt xuất huyết (DIFF_DENGUE)
-    elif s.get('skin_rash') and s.get('rash_type') in ["Chấm xuất huyết", "Bầm máu"] and \
-         s.get('fever_temp', 0) >= 39.0:
-        diff_result = {"alert": "Sốt xuất huyết/Nhiễm khuẩn huyết", "advice": "Nghi ngờ Sốt xuất huyết Dengue, cần làm thêm NS1Ag."}
-
-    # D. Kiểm tra Viêm da mủ (DIFF_PYODERMA)
-    elif s.get('skin_rash') and s.get('rash_type') == "Mụn mủ" and s.get('skin_rash_pain') == True:
-        diff_result = {"alert": "Viêm da mủ", "advice": "Nghi ngờ Viêm da mủ, kiểm tra tình trạng vệ sinh da."}
-
-    # E. Kiểm tra Dị ứng (DIFF_ALLERGY)
-    elif s.get('skin_rash') and s.get('rash_type') == "Hồng ban đa dạng" and \
-         s.get('rash_itchiness') == True and s.get('fever') == False:
-        diff_result = {"alert": "Dị ứng", "advice": "Nghi ngờ Dị ứng da."}
-
-    # F. Kiểm tra Sốt phát ban (DIFF_EXANTHEMA)
-    elif s.get('skin_rash') and s.get('rash_type') == "Hồng ban và sẩn" and \
-         s.get('fever') == True and s.get('post_auricular_lymph_nodes') == True:
-        diff_result = {"alert": "Sốt phát ban", "advice": "Nghi ngờ Sốt phát ban (Roseola/Rubella)."}
-
-    # G. Kiểm tra Ap-tơ (DIFF_APHTHOUS & DIFF_APHTHOUS_ALT)
-    elif s.get('mouth_ulcer') == True and s.get('history_ulcer_recurrence') == True:
-        if s.get('skin_rash') == False and s.get('ulcer_characteristics') == "Atypical":
-            diff_result = {"alert": "Ap tơ", "advice": "Theo dõi thêm, có khả năng là viêm loét miệng Ap-tơ."}
-        elif s.get('ulcer_characteristics') == "Typical":
-            diff_result = {"alert": "Ap tơ", "advice": "Loét miệng có tiền sử tái phát, theo dõi Ap-tơ."}
-
-    # --- TRẢ VỀ KẾT QUẢ LOẠI TRỪ NẾU CÓ ---
-    if diff_result:
-        return {
-            "status": "Differential",
-            "diagnosis": "Cần chẩn đoán phân biệt",
-            "differential": diff_result['alert'],
-            "treatment": diff_result['advice'],
-            "grade": "N/A"
-        }
-
-    # 2. LOGIC PHÂN ĐỘ TCM (NẾU KHÔNG BỊ LOẠI TRỪ)
-    final_grade = "Độ 1"
-    treatment = "Theo dõi ngoại trú, tái khám mỗi 1-2 ngày."
-    
-    # Dữ liệu phục vụ phân độ
-    hr = v.get('heart_rate', 0)
-    temp = s.get('fever_temp', 0)
-    startle_h = v.get('startle_reflex_history', 0)
-    
-    # Phân độ 4: Nguy kịch
-    if v.get('apnea_gasping') or v.get('cyanosis') or v.get('unmeasurable_bp_pulse') or v.get('mottled_skin'):
-        final_grade = "Độ 4"
-        treatment = "CẤP CỨU HỒI SỨC TÍCH CỰC Tuyến cuối."
-    
-    # Phân độ 3: Biến chứng nặng
-    elif hr > 170 or v.get('respiratory_distress') or v.get('sweating') or v.get('systolic_bp', 0) > 140:
-        final_grade = "Độ 3"
-        treatment = "NHẬP VIỆN CẤP CỨU: Theo dõi sát mạch, HA, nhịp thở, tri giác."
-        
-    # Phân độ 2b - Nhóm 2: Sốt cao, mạch nhanh
-    elif temp >= 39.5 or hr > 150 or s.get('fever_refractory'):
-        final_grade = "Độ 2b (Nhóm 2)"
-        treatment = "Nhập viện điều trị nội trú, theo dõi sát diễn tiến."
-
-    # Phân độ 2b - Nhóm 1: Giật mình lúc khám hoặc dấu hiệu thần kinh
-    elif v.get('startle_reflex_exam') or v.get('ataxia') or v.get('limb_weakness') or v.get('nystagmus'):
-        final_grade = "Độ 2b (Nhóm 1)"
-        treatment = "Nhập viện điều trị nội trú (Khoa Nhi/Hồi sức Nhi)."
-
-    # Phân độ 2a: Giật mình bệnh sử hoặc sốt kéo dài
-    elif startle_h > 0 or s.get('fever_duration_days', 0) >= 2 or temp >= 39:
-        final_grade = "Độ 2a"
-        treatment = "Nhập viện theo dõi tại Bệnh viện Huyện hoặc Bệnh viện Tỉnh."
-
-    # Xác định chẩn đoán lâm sàng
-    diag_name = "Ca lâm sàng TCM"
-    if lab.get('ev71_result') == 'Positive': diag_name = "Ca xác định TCM (EV71+)"
-    elif lab.get('ev71_result') == 'NotDone': diag_name += " (Chưa có XN vi rút)"
-
-    return {
-        "status": "Success",
-        "diagnosis": diag_name,
-        "grade": final_grade,
-        "treatment": treatment,
-        "differential": None
-    }
-
-# --- CÁC ROUTE API ---
+        try:
+            allowed_names = {"__builtins__": None, "max": max, "min": min, "abs": abs, "len": len}
+            if eval(cond, allowed_names, context):
+                exec(r['action_then'], {"__builtins__": None}, context)
+                executed_any = True
+                if step_mode or context.get('stop_program'):
+                    break
+        except Exception as e:
+            print(f"Lỗi thực thi luật {r['rule_id']}: {e}")
+            
+    return executed_any
 
 @app.route('/diagnose', methods=['POST'])
 def diagnose():
     data = request.json
-    result = run_python_inference(data)
-    
+    # Khởi tạo ngữ cảnh với đầy đủ các trường cần thiết cho 9 bước
+    ctx = {
+        **data.get('patient', {}), **data.get('clinical', {}), 
+        **data.get('vitals', {}), **data.get('lab', {}),
+        'complication_type': [], 'recommended_next_step': [], 'lab_orders': [],
+        'diagnosis_status': None, 'clinical_form': None, 'current_grade': None,
+        'priority_level': "3", 'differential_alert': None, 'stop_program': False,
+        'treatment_location': None, 'transfer_needed': False, 'oxygen_support': False
+    }
+
     conn = connect_db()
-    if conn:
-        try:
-            with conn.cursor() as cursor:
-                # 1. Lưu thông tin bệnh nhân
-                sql_p = """INSERT INTO tb_patient_info 
-                           (full_name, age_months, gender, epidemiology_contact, has_comorbidities, comorbidities_detail) 
-                           VALUES (%s, %s, %s, %s, %s, %s)"""
-                cursor.execute(sql_p, (data.get('full_name'), data.get('age_months'), data.get('gender'), 
-                                       1 if data.get('epidemiology_contact') else 0, 
-                                       1 if data.get('has_comorbidities') else 0, 
-                                       data.get('comorbidities_detail')))
-                p_id = conn.insert_id()
+    if not conn: return jsonify({"error": "Lỗi kết nối CSDL"}), 500
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM rule_base")
+        all_rules = cursor.fetchall()
+        
+        # Nhóm luật theo loại
+        rules_by_type = {t: [r for r in all_rules if r['rule_type'] == t] 
+                         for t in ['Complication', 'Differential', 'Diagnosis', 'Grading', 'Lab', 'Treatment']}
 
-                # 2. Lưu lâm sàng & xét nghiệm
-                sql_v = """INSERT INTO tb_vital_signs_neuro 
-                           (patient_id, fever_temp, heart_rate, spo2, startle_reflex_history, ev71_result) 
-                           VALUES (%s, %s, %s, %s, %s, %s)"""
-                cursor.execute(sql_v, (p_id, data['symptoms'].get('fever_temp'), data['vitals'].get('heart_rate'), 
-                                       data['vitals'].get('spo2'), data['vitals'].get('startle_reflex_history'), 
-                                       data['labTests'].get('ev71_result')))
+        # --- THỰC THI THEO 9 BƯỚC CỦA BẠN ---
 
-                # 3. Lưu kết quả chẩn đoán
-                sql_g = """INSERT INTO tb_grading_result 
-                           (patient_id, diagnosis_status, current_grade, differential_alert, recommended_next_step) 
-                           VALUES (%s, %s, %s, %s, %s)"""
-                cursor.execute(sql_g, (p_id, result['diagnosis'], result['grade'], 
-                                       result['differential'], result['treatment']))
-                
-                conn.commit()
-                result['patientId'] = p_id
-        except Exception as e:
-            print(f"Lỗi Database: {e}")
-            conn.rollback()
-        finally:
-            conn.close()
-    return jsonify(result)
+        # BƯỚC 2: Kiểm tra biến chứng (Thông báo nhưng không dừng)
+        run_python_inference(rules_by_type['Complication'], ctx)
+
+        # BƯỚC 3: Kiểm tra bệnh khác (Nếu thỏa -> Gán stop_program = True và Dừng)
+        if run_python_inference(rules_by_type['Differential'], ctx):
+            if ctx.get('stop_program'):
+                return jsonify(ctx)
+
+        # BƯỚC 4, 5, 6, 7: Phân loại ca bệnh ban đầu
+        # Dùng step_mode=True vì chỉ cần rơi vào 1 trong các loại này
+        diag_base_rules = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
+        found_base = run_python_inference(diag_base_rules, ctx, step_mode=True)
+
+        # Nếu không thỏa mãn bất kỳ bước nào từ 4-7 -> Không mắc bệnh -> Dừng
+        if not found_base:
+            ctx['diagnosis_status'] = "Không mắc bệnh"
+            ctx['current_grade'] = "Không phân độ"
+            return jsonify(ctx)
+
+        # BƯỚC 8: Ghi đè Thể tối cấp (Dựa trên progression speed)
+        step8_rules = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP8']
+        run_python_inference(step8_rules, ctx)
+
+        # BƯỚC 9: Ghi đè Ca xác định (Dựa trên kết quả xét nghiệm)
+        step9_rules = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP9']
+        run_python_inference(step9_rules, ctx)
+
+        # --- SAU KHI XÁC ĐỊNH CA BỆNH -> TIẾN HÀNH PHÂN ĐỘ ---
+        # Ưu tiên Độ 4 > 3 > 2b > 2a > 1 nhờ priority và step_mode=True
+        run_python_inference(rules_by_type['Grading'], ctx, step_mode=True)
+
+        # --- BỔ SUNG: CHỈ ĐỊNH CẬN LÂM SÀNG & PHÂN TUYẾN ---
+        run_python_inference(rules_by_type['Lab'], ctx)
+        run_python_inference(rules_by_type['Treatment'], ctx)
+
+    finally:
+        conn.close()
+
+    # Trả về kết quả cuối cùng bao gồm lab_orders và tất cả output
+    return jsonify(ctx)
 
 @app.route('/history', methods=['GET'])
 def get_history():
     conn = connect_db()
-    if not conn: return jsonify([])
+    if not conn: return jsonify({"error": "DB Error"}), 500
     try:
         with conn.cursor() as cursor:
             sql = """
-                SELECT p.patient_id as id, p.full_name as name, p.age_months as age, p.created_at as date,
-                       g.current_grade as grade, g.diagnosis_status as diagnosis, g.recommended_next_step as treatment
-                FROM tb_patient_info p
-                JOIN tb_grading_result g ON p.patient_id = g.patient_id
+                SELECT p.patient_id as id, p.full_name as name, p.created_at as date,
+                       p.age_months, g.current_grade as grade, o.diagnosis_status as diagnosis,
+                       t.treatment_location as treatment, g.complication_type as complication
+                FROM Patient p
+                LEFT JOIN DiagnosticOutput o ON p.patient_id = o.patient_id
+                LEFT JOIN HFMDGrading g ON p.patient_id = g.patient_id
+                LEFT JOIN TreatmentPlan t ON p.patient_id = t.patient_id
                 ORDER BY p.created_at DESC
             """
             cursor.execute(sql)
-            rows = cursor.fetchall()
-            for r in rows:
-                if r['date']: r['date'] = r['date'].strftime("%Y-%m-%d %H:%M")
-            return jsonify(rows)
+            return jsonify(cursor.fetchall())
     finally:
         conn.close()
 
-@app.route('/delete/<int:patient_id>', methods=['DELETE'])
+@app.route('/delete_patient/<int:patient_id>', methods=['DELETE'])
 def delete_patient(patient_id):
     conn = connect_db()
-    if not conn: return jsonify({"status": "error"}), 500
     try:
         with conn.cursor() as cursor:
-            cursor.execute("DELETE FROM tb_patient_info WHERE patient_id = %s", (patient_id,))
+            cursor.execute("DELETE FROM Patient WHERE patient_id = %s", (patient_id,))
             conn.commit()
-            return jsonify({"status": "success", "message": f"Đã xóa ca bệnh ID: {patient_id}"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+            return jsonify({"status": "success"})
     finally:
         conn.close()
 
