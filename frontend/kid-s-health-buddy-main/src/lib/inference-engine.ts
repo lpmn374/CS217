@@ -238,7 +238,7 @@ export interface Symptoms {
   
   skin_rash: boolean;
   skin_rash_location: 'Lòng bàn tay, chân, gối, khuỷu, mông' | 'Toàn thân' ;
-  rash_type: 'Phỏng nước điển hình' | 'Mụn mủ' | 'Chấm xuất huyết' | 'Bầm máu' | 'Hoại tử' | 'Hồng ban và sẩn' | 'Hồng ban đa dạng';
+  rash_type: 'Phỏng nước điển hình' | 'Mụn mủ' | 'Chấm xuất huyết' | 'Bầm máu' | 'Hoại tử trung tâm' | 'Hồng ban và sẩn' | 'Hồng ban đa dạng';
   rash_itchiness: boolean;
   rash_stages: 'Đồng đều' | 'Nhiều độ tuổi';
   skin_rash_pain: boolean;
@@ -304,26 +304,64 @@ export interface LabTests {
   chest_xray_edema: boolean; // X-quang phổi có hình ảnh phù phổi không
 }
 
+export interface InferenceStep {
+  ruleId: string;
+  description: string;
+  condition: string;
+  activated: boolean;
+  isFinal?: boolean;
+}
+
 // 4. Kết quả chẩn đoán & Phân độ
 export interface DiagnosisResult {
-  diagnosis_status: 'Ca xác định TCM' | 'Ca lâm sàng TCM' | 'Nghi ngờ bệnh khác' | 'Chưa đủ dữ liệu';
-  clinical_form: 'Cấp tính' | 'Không điển hình (Chỉ loét miệng)' | 'Không điển hình (Thể kín)' | 'Tối cấp';
-  current_grade: 'Độ 1' | 'Độ 2a' | 'Độ 2b (Nhóm 1)' | 'Độ 2b (Nhóm 2)' | 'Độ 3' | 'Độ 4';
-  priority_level: '1' | '2' | '3'; // 1 (cao nhất), 2 (trung bình), 3(thấp nhất).
-  complication_type: 'Thần kinh' | 'Tim mạch' | 'Hô hấp' ; //Loại biến chứng nghi ngờ
-  differential_alert: 'Ap tơ' | 'Thủy đậu' | 'Sốt xuất huyết/Nhiễm khuẩn huyết' | 'Viêm da mủ' | 'Dị ứng' | 'Sốt phát ban';
-  primary_evidence: string ;
+  // diagnosis_status: 'Ca xác định TCM' | 'Ca lâm sàng TCM' | 'Nghi ngờ bệnh khác' | 'Chưa đủ dữ liệu'| 'Ca nghi ngờ TCM' | 'Không mắc bệnh';
+  // clinical_form: 'Cấp tính' | 'Không điển hình (Chỉ loét miệng)' | 'Không điển hình (Thể kín)' | 'Tối cấp';
+  // current_grade: 'Độ 1' | 'Độ 2a' | 'Độ 2b (Nhóm 1)' | 'Độ 2b (Nhóm 2)' | 'Độ 3' | 'Độ 4';
+  // priority_level: '1' | '2' | '3'; // 1 (cao nhất), 2 (trung bình), 3(thấp nhất).
+  // complication_type: string;
+  // differential_alert: 'Ap tơ' | 'Thủy đậu' | 'Sốt xuất huyết/Nhiễm khuẩn huyết' | 'Viêm da mủ' | 'Dị ứng' | 'Sốt phát ban';
+  // primary_evidence: string ;
+  // treatment_location: string;
+  // transfer_needed: boolean;
+  // current_facility_level: string;
+  // warning_signs: string[] ; //Các dấu hiệu cảnh báo cần theo dõi sát (Ví dụ: Mạch > 130, Sốt cao khó hạ).
+  // oxygen_support: boolean;
+  // recommended_next_step: string;
+  // lab_orders: string;
+
+  // Đồng bộ với 9 bước chẩn đoán
+  diagnosis_status: string;
+  clinical_form: string | null;
+  current_grade: string | null;
+  resultGrade?: string; // Dùng dự phòng cho UI cũ
+  priority_level: '1' | '2' | '3';
+  complication_type: string | string[]; // Backend trả về chuỗi hoặc mảng
+  differential_alert?: string | null;
   treatment_location: string;
-  transfer_needed: boolean;
-  current_facility_level: string;
-  warning_signs: string[] ; //Các dấu hiệu cảnh báo cần theo dõi sát (Ví dụ: Mạch > 130, Sốt cao khó hạ).
-  oxygen_support: boolean;
   recommended_next_step: string;
+  treatment?: string; // Alias cho recommended_next_step trong UI
+  lab_orders: string | string[]; // Backend trả về chuỗi hoặc mảng
+  stop_program?: boolean; 
+  isClinicalCase?: boolean; // Cờ để UI hiển thị màu sắc TCM
+  inferenceSteps?: InferenceStep[];
+  transfer_needed?: boolean;
 }
 
 // 5. Hồ sơ bệnh nhân
 export interface DiagnosisRecord {
-  patient_id?: string ;
+  // patient_id?: string ;
+  // full_name: string;
+  // age_months: number;
+  // gender: string;
+  // epidemiology_contact: boolean;
+  // has_comorbidities: boolean;
+  // comorbidities_detail: string;
+  // symptoms: Symptoms;
+  // vitals: Vitals;
+  // labTests: LabTests;
+  // result?: DiagnosisResult;
+
+  patient_id?: number; // Đổi sang number để khớp với AUTO_INCREMENT của SQL
   full_name: string;
   age_months: number;
   gender: string;
@@ -344,7 +382,6 @@ const API_BASE_URL = 'http://127.0.0.1:5000';
  */
 export async function runInference(formData: DiagnosisRecord): Promise<DiagnosisResult> {
   try {
-    // Tự động tính Hiệu áp trước khi gửi lên Server
     if (formData.vitals.systolic_bp && formData.vitals.diastolic_bp) {
       formData.vitals.pulse_pressure = formData.vitals.systolic_bp - formData.vitals.diastolic_bp;
     }
@@ -352,13 +389,30 @@ export async function runInference(formData: DiagnosisRecord): Promise<Diagnosis
     const response = await fetch(`${API_BASE_URL}/diagnose`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData) 
+      body: JSON.stringify({
+        patient: {
+          full_name: formData.full_name,
+          age_months: formData.age_months,
+          gender: formData.gender,
+          epidemiology_contact: formData.epidemiology_contact,
+          has_comorbidities: formData.has_comorbidities
+        },
+        clinical: formData.symptoms,
+        vitals: formData.vitals,
+        lab: formData.labTests
+      }) 
     });
     
     if (!response.ok) throw new Error('Lỗi kết nối Backend');
     const result = await response.json();
     
-    return result;
+    // Đảm bảo các trường danh sách không bao giờ null để tránh lỗi .includes() hoặc .map()
+    return {
+      ...result,
+      complication_type: Array.isArray(result.complication_type) ? result.complication_type : [],
+      lab_orders: Array.isArray(result.lab_orders) ? result.lab_orders : [],
+      recommended_next_step: Array.isArray(result.recommended_next_step) ? result.recommended_next_step : []
+    };
   } catch (error) {
     console.error("Inference Error:", error);
     throw error;
