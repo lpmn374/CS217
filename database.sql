@@ -209,12 +209,12 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- =====================================================
 -- BƯỚC 4: Ca lâm sàng điển hình
 ('R_STEP4', 800, 'Diagnosis', 
-'(mouth_ulcer == 1 and ulcer_characteristics == "Typical" and history_ulcer_recurrence == 0) or (skin_rash == 1 and rash_type == "Phỏng nước điển hình" and skin_rash_location == "Lòng bàn tay, chân, gối, khuỷu, mông" and epidemiology_contact == 1)', 
+'(mouth_ulcer == 1 and ulcer_characteristics == "Typical" and history_ulcer_recurrence == 0) or (skin_rash == 1 and rash_type == "Phỏng nước điển hình" and (skin_rash_location == "Lòng bàn tay, chân, gối, khuỷu, mông" or epidemiology_contact == 1 or rash_stages == "Đồng đều")', 
 'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Cấp tính"; priority_level = "2";'),
 
 -- BƯỚC 5: Ca lâm sàng không điển hình (chỉ loét miệng)
 ('R_STEP5', 700, 'Diagnosis', 
-'diagnosis_status == None and mouth_ulcer == 1 and skin_rash == 0 and epidemiology_contact == 1', 
+'(diagnosis_status == None and mouth_ulcer == 1 and skin_rash == 0 and (history_ulcer_recurrence == 0 or epidemiology_contact == 1))', 
 'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Không điển hình (Chỉ loét miệng)"; priority_level = "2";'),
 
 -- BƯỚC 6: Ca lâm sàng không điển hình (thể kín - chỉ có triệu chứng nội khoa)
