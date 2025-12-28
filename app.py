@@ -529,6 +529,14 @@ def save_to_db(conn, ctx):
         print(f"❌ Lỗi lưu DB: {e}")
         conn.rollback()
 
+def clean_ctx(val):
+    """Chuyển đổi mảng 1 phần tử thành chuỗi, xử lý None"""
+    if isinstance(val, list):
+        return val[0] if len(val) > 0 else ""
+    if val is None:
+        return ""
+    return val
+
 @app.route('/diagnose', methods=['POST'])
 def diagnose():
     data = request.json
@@ -536,13 +544,6 @@ def diagnose():
     c = data.get('clinical', {})
     v = data.get('vitals', {})
     l = data.get('lab', {})
-
-    # Xử lý skin_rash_location từ mảng thành chuỗi
-    raw_location = c.get('skin_rash_location', '')
-    if isinstance(raw_location, list):
-        skin_rash_location = raw_location[0] if len(raw_location) > 0 else ''
-    else:
-        skin_rash_location = raw_location
 
     # KHỞI TẠO CONTEXT
     ctx = {
@@ -562,7 +563,7 @@ def diagnose():
         'history_ulcer_recurrence': int(c.get('history_ulcer_recurrence', 0) or 0),
         'skin_rash': int(c.get('skin_rash', 0) or 0),
         'rash_type': c.get('rash_type', ''),
-        'skin_rash_location': skin_rash_location,
+        'skin_rash_location': c.get('skin_rash_location', ''),
         'rash_stages': c.get('rash_stages', ''),
         'rash_itchiness': int(c.get('rash_itchiness', 0) or 0),
         'skin_rash_pain': int(c.get('skin_rash_pain', 0) or 0),
@@ -621,6 +622,12 @@ def diagnose():
         'oxygen_support': False,
         'current_facility_level': data.get('current_facility_level', 'Tuyến trạm y tế xã / Phòng khám tư nhân')
     }
+
+    # Trước khi chạy inference, dọn dẹp các trường chuỗi quan trọng
+    for key in ['skin_rash_location', 'rash_type', 'ulcer_characteristics', 
+                'rash_stages', 'symptom_progression_speed', 'avpu_score',
+                'ev71_result', 'other_enterovirus_result', 'viral_isolation_result']:
+        ctx[key] = clean_ctx(ctx.get(key))
 
     conn = connect_db()
     if not conn: 
