@@ -294,7 +294,7 @@ const COMMON_COMORBIDITIES = [
 // ];
 
 interface DiagnosisFormProps {
-  onSubmit: (data: DiagnosisRecord) => void;
+  onSubmit: (data: any) => void; // Chuyển thành any vì cấu trúc gửi đi sẽ khác với DiagnosisRecord
   isLoading?: boolean;
 }
 
@@ -401,8 +401,86 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
   };
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-      
+    //<form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+    // Tìm đến dòng <form onSubmit={...}> và thay bằng đoạn này:
+    <form 
+      onSubmit={(e) => { 
+        e.preventDefault(); 
+        
+        // Đóng gói dữ liệu theo đúng cấu trúc app.py cần (patient, clinical, vitals, lab)
+        const transformedData = {
+          patient: {
+            full_name: formData.full_name,
+            age_months: formData.age_months,
+            gender: formData.gender,
+            epidemiology_contact: formData.epidemiology_contact ? 1 : 0,
+            has_comorbidities: formData.has_comorbidities ? 1 : 0,
+            comorbidities_detail: formData.comorbidities_detail,
+          },
+          clinical: {
+            fever: formData.symptoms.fever ? 1 : 0,
+            fever_temp: formData.symptoms.fever_temp,
+            fever_duration_days: formData.symptoms.fever_duration_days,
+            fever_refractory: formData.symptoms.fever_refractory ? 1 : 0,
+            symptom_progression_speed: formData.symptoms.symptom_progression_speed,
+            mouth_ulcer: formData.symptoms.mouth_ulcer ? 1 : 0,
+            ulcer_characteristics: formData.symptoms.ulcer_characteristics,
+            history_ulcer_recurrence: formData.symptoms.history_ulcer_recurrence ? 1 : 0,
+            skin_rash: formData.symptoms.skin_rash ? 1 : 0,
+            skin_rash_location: Array.isArray(formData.symptoms.skin_rash_location) ? formData.symptoms.skin_rash_location[0] : formData.symptoms.skin_rash_location,
+            rash_type: formData.symptoms.rash_type,
+            rash_itchiness: formData.symptoms.rash_itchiness ? 1 : 0,
+            rash_stages: formData.symptoms.rash_stages,
+            skin_rash_pain: formData.symptoms.skin_rash_pain ? 1 : 0,
+            post_auricular_lymph_nodes: formData.symptoms.post_auricular_lymph_nodes ? 1 : 0,
+            mucosal_bleeding: formData.symptoms.mucosal_bleeding ? 1 : 0,
+            vomiting: formData.symptoms.vomiting ? 1 : 0,
+            lethargy: formData.symptoms.lethargy ? 1 : 0,
+            sleep_disturbance: formData.symptoms.sleep_disturbance ? 1 : 0,
+            irritable_crying: formData.symptoms.irritable_crying ? 1 : 0,
+            poor_feeding: formData.symptoms.poor_feeding ? 1 : 0,
+            sore_throat: formData.symptoms.sore_throat ? 1 : 0,
+            fatigue: formData.symptoms.fatigue ? 1 : 0,
+          },
+          vitals: {
+            heart_rate: formData.vitals.heart_rate,
+            respiratory_rate: formData.vitals.respiratory_rate,
+            systolic_bp: formData.vitals.systolic_bp,
+            diastolic_bp: formData.vitals.diastolic_bp,
+            pulse_pressure: formData.vitals.pulse_pressure,
+            spo2: formData.vitals.spo2,
+            capillary_refill_time: formData.vitals.capillary_refill_time,
+            unmeasurable_bp_pulse: formData.vitals.unmeasurable_bp_pulse ? 1 : 0,
+            respiratory_rate_high: formData.vitals.respiratory_rate_high ? 1 : 0,
+            respiratory_distress: formData.vitals.respiratory_distress ? 1 : 0,
+            stridor: formData.vitals.stridor ? 1 : 0,
+            apnea_gasping: formData.vitals.apnea_gasping ? 1 : 0,
+            cyanosis: formData.vitals.cyanosis ? 1 : 0,
+            mottled_skin: formData.vitals.mottled_skin ? 1 : 0,
+            sweating: formData.vitals.sweating ? 1 : 0,
+            startle_reflex_history: formData.vitals.startle_reflex_history,
+            startle_reflex_exam: formData.vitals.startle_reflex_exam ? 1 : 0,
+            ataxia: formData.vitals.ataxia ? 1 : 0,
+            nystagmus: formData.vitals.nystagmus ? 1 : 0,
+            squint: formData.vitals.squint ? 1 : 0,
+            limb_weakness: formData.vitals.limb_weakness ? 1 : 0,
+            muscle_tone_increased: formData.vitals.muscle_tone_increased ? 1 : 0,
+            cranial_nerve_palsy: formData.vitals.cranial_nerve_palsy ? 1 : 0,
+            avpu_score: formData.vitals.avpu_score,
+            coma_gcs: formData.vitals.coma_gcs,
+          },
+          lab: {
+            ev71_result: formData.labTests.ev71_result,
+            other_enterovirus_result: formData.labTests.other_enterovirus_result,
+            viral_isolation_result: formData.labTests.viral_isolation_result,
+            chest_xray_edema: formData.labTests.chest_xray_edema ? 1 : 0,
+          }
+        };
+
+        onSubmit(transformedData); 
+      }} 
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20"
+    >  
       {/* 1. HÀNH CHÍNH & DỊCH TỄ */}
       <Card className="shadow-sm border-t-4 border-t-blue-500">
         <CardHeader><CardTitle className="flex items-center gap-2 text-md font-bold uppercase"><User size={18}/> Bệnh nhân & Dịch tễ</CardTitle></CardHeader>

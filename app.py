@@ -259,13 +259,18 @@ def connect_db():
         print(f"Lỗi kết nối CSDL: {e}")
         return None
 
-def run_python_inference(rules, context, step_mode=False):
+def run_python_inference(rules, context):
     """
-    Chạy bộ suy diễn với context đã cho
-    step_mode=True: Dừng sau rule đầu tiên thỏa điều kiện
+    Chạy bộ suy diễn theo ĐÚNG QUY TRÌNH:
+    1. Kiểm tra biến chứng
+    2. Kiểm tra bệnh khác (nếu có -> DỪNG)
+    3. Phân loại ca bệnh (4->7)
+    4. Kiểm tra thể tối cấp (8)
+    5. Kiểm tra ca xác định (9)
+    6. Phân độ
+    7. Chỉ định cận lâm sàng
+    8. Phân tuyến điều trị
     """
-    executed_any = False
-    sorted_rules = sorted(rules, key=lambda x: x['priority'], reverse=True)
     
     # Đảm bảo các list không bị None
     for list_key in ['complication_type', 'recommended_next_step', 'lab_orders']:
@@ -278,29 +283,142 @@ def run_python_inference(rules, context, step_mode=False):
         "True": True, "False": False, "None": None
     }
 
-    for r in sorted_rules:
-        cond = str(r['condition_if']).replace('\xa0', ' ').strip()
+    # Nhóm luật theo loại
+    rules_by_type = {}
+    for r in rules:
+        rule_type = r['rule_type']
+        if rule_type not in rules_by_type:
+            rules_by_type[rule_type] = []
+        rules_by_type[rule_type].append(r)
+    
+    # Sắp xếp theo priority
+    for rule_type in rules_by_type:
+        rules_by_type[rule_type].sort(key=lambda x: x['priority'], reverse=True)
+
+    def execute_rule(rule):
+        """Thực thi một luật"""
+        cond = str(rule['condition_if']).replace('\xa0', ' ').strip()
         cond = cond.replace('AND', 'and').replace('OR', 'or')
         cond = re.sub(r'IN\s*\((.*?)\)', r'in [\1]', cond, flags=re.IGNORECASE)
-
+        
         try:
             if eval(cond, globals_dict, context):
-                print(f"✅ Luật {r['rule_id']} THỎA MÃN | Priority: {r['priority']}")
-                actions = r['action_then'].split(';')
+                print(f"✅ Luật {rule['rule_id']} THỎA MÃN")
+                actions = rule['action_then'].split(';')
                 for action in actions:
                     act_strip = action.strip()
                     if act_strip:
                         exec(act_strip, globals_dict, context)
-                
-                executed_any = True
-                if step_mode or context.get('stop_program'):
-                    break
-            else:
-                print(f"⏭️  Luật {r['rule_id']} không thỏa | Priority: {r['priority']}")
+                return True
         except Exception as e:
-            print(f"⚠ Lỗi tại luật {r['rule_id']}: {e} | Logic: {cond}")
-            
-    return executed_any
+            print(f"⚠️ Lỗi tại luật {rule['rule_id']}: {e}")
+        return False
+
+    # ============ QUY TRÌNH SUY DIỄN ============
+    
+    print("\n" + "="*80)
+    print("🔍 BẮT ĐẦU QUY TRÌNH SUY DIỄN")
+    print("="*80)
+    
+    # BƯỚC 1: KIỂM TRA BIẾN CHỨNG
+    print("\n[BƯỚC 1] Kiểm tra biến chứng...")
+    if 'Complication' in rules_by_type:
+        for rule in rules_by_type['Complication']:
+            execute_rule(rule)
+    
+    has_complications = len(context.get('complication_type', [])) > 0
+    print(f"→ Có biến chứng: {has_complications}")
+    if has_complications:
+        print(f"→ Các biến chứng: {', '.join(context['complication_type'])}")
+    
+    # BƯỚC 2: KIỂM TRA BỆNH KHÁC (DIFFERENTIAL)
+    print("\n[BƯỚC 2] Kiểm tra bệnh khác (Differential)...")
+    if 'Differential' in rules_by_type:
+        for rule in rules_by_type['Differential']:
+            if execute_rule(rule):
+                if context.get('stop_program'):
+                    print("⛔ DỪNG: Nghi ngờ bệnh khác")
+                    return True  # Dừng chương trình
+    
+    if context.get('differential_alert'):
+        print(f"→ Phát hiện: {context['differential_alert']}")
+        return True  # Dừng
+    else:
+        print("→ Không phải bệnh khác, tiếp tục phân loại TCM")
+    
+    # BƯỚC 3: PHÂN LOẠI CA BỆNH (4->7)
+    print("\n[BƯỚC 3] Phân loại ca bệnh TCM...")
+    diagnosis_rules = []
+    if 'Diagnosis' in rules_by_type:
+        # Lấy luật STEP4, STEP5, STEP6, STEP7
+        diagnosis_rules = [r for r in rules_by_type['Diagnosis'] 
+                          if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
+    
+    case_classified = False
+    for rule in diagnosis_rules:
+        if execute_rule(rule):
+            case_classified = True
+            print(f"→ Phân loại: {context.get('diagnosis_status')} - {context.get('clinical_form')}")
+            break
+    
+    if not case_classified:
+        print("→ KHÔNG MẮC BỆNH TCM")
+        context['diagnosis_status'] = "Không mắc bệnh/Theo dõi thêm"
+        context['current_grade'] = "Không phân độ"
+        return True  # Dừng
+    
+    # BƯỚC 4: KIỂM TRA THỂ TỐI CẤP (STEP8)
+    print("\n[BƯỚC 4] Kiểm tra thể tối cấp...")
+    if 'Diagnosis' in rules_by_type:
+        step8_rule = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP8']
+        if step8_rule:
+            if execute_rule(step8_rule[0]):
+                print(f"→ Cập nhật: {context.get('clinical_form')}")
+    
+    # BƯỚC 5: KIỂM TRA CA XÁC ĐỊNH (STEP9)
+    print("\n[BƯỚC 5] Kiểm tra ca xác định...")
+    if 'Diagnosis' in rules_by_type:
+        step9_rule = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP9']
+        if step9_rule:
+            if execute_rule(step9_rule[0]):
+                print(f"→ Cập nhật: {context.get('diagnosis_status')}")
+    
+    # BƯỚC 6: PHÂN ĐỘ
+    print("\n[BƯỚC 6] Phân độ bệnh...")
+    if 'Grading' in rules_by_type:
+        for rule in rules_by_type['Grading']:
+            if execute_rule(rule):
+                print(f"→ Phân độ: {context.get('current_grade')}")
+                break  # Dừng ở luật đầu tiên thỏa mãn
+    
+    if not context.get('current_grade'):
+        context['current_grade'] = "Độ 1"
+        print("→ Mặc định: Độ 1")
+    
+    # BƯỚC 7: CHỈ ĐỊNH CẬN LÂM SÀNG
+    print("\n[BƯỚC 7] Chỉ định cận lâm sàng...")
+    if 'Lab' in rules_by_type:
+        for rule in rules_by_type['Lab']:
+            execute_rule(rule)
+    
+    if context.get('lab_orders'):
+        print(f"→ Chỉ định: {len(context['lab_orders'])} xét nghiệm")
+    else:
+        print("→ Không có chỉ định đặc biệt")
+    
+    # BƯỚC 8: PHÂN TUYẾN ĐIỀU TRỊ
+    print("\n[BƯỚC 8] Phân tuyến điều trị...")
+    if 'Treatment' in rules_by_type:
+        for rule in rules_by_type['Treatment']:
+            if execute_rule(rule):
+                print(f"→ Tuyến điều trị: {context.get('treatment_location')}")
+                break
+    
+    print("\n" + "="*80)
+    print("✅ HOÀN THÀNH QUY TRÌNH SUY DIỄN")
+    print("="*80 + "\n")
+    
+    return False  # Không dừng, đã hoàn thành
 
 def save_to_db(conn, ctx):
     """Lưu toàn bộ dữ liệu vào database"""
@@ -309,15 +427,16 @@ def save_to_db(conn, ctx):
             # 1. LƯU PATIENT
             sql_p = """
                 INSERT INTO Patient 
-                (full_name, age_months, gender, epidemiology_contact, has_comorbidities) 
-                VALUES (%s, %s, %s, %s, %s)
+                (full_name, age_months, gender, epidemiology_contact, has_comorbidities, comorbidities_detail) 
+                VALUES (%s, %s, %s, %s, %s, %s)
             """
             cursor.execute(sql_p, (
                 ctx.get('full_name', 'N/A'), 
                 ctx.get('age_months', 0),
                 ctx.get('gender', 'Nam'),
                 ctx.get('epidemiology_contact', 0),
-                ctx.get('has_comorbidities', 0)
+                ctx.get('has_comorbidities', 0),
+                ctx.get('comorbidities_detail', '')
             ))
             p_id = conn.insert_id()
 
@@ -418,32 +537,21 @@ def diagnose():
     v = data.get('vitals', {})
     l = data.get('lab', {})
 
-    # ✅ DEBUG: In ra dữ liệu nhận được
-    print("\n" + "="*80)
-    print("📥 DỮ LIỆU NHẬN TỪ REACT:")
-    print("="*80)
-    print(f"Clinical data: {c}")
-    print(f"skin_rash: {c.get('skin_rash')}")
-    print(f"rash_type: {c.get('rash_type')}")
-    print(f"skin_rash_location (RAW): {c.get('skin_rash_location')}")
-    print(f"rash_stages: {c.get('rash_stages')}")
-    print(f"rash_itchiness: {c.get('rash_itchiness')}")
-    print("="*80 + "\n")
-
-    # KHỞI TẠO CONTEXT
-    # ✅ SỬA: Xử lý skin_rash_location từ mảng thành chuỗi
+    # Xử lý skin_rash_location từ mảng thành chuỗi
     raw_location = c.get('skin_rash_location', '')
     if isinstance(raw_location, list):
         skin_rash_location = raw_location[0] if len(raw_location) > 0 else ''
     else:
         skin_rash_location = raw_location
 
+    # KHỞI TẠO CONTEXT
     ctx = {
         'full_name': p.get('full_name', 'N/A'),
         'age_months': int(p.get('age_months', 0) or 0),
         'gender': p.get('gender', 'Nam'),
         'epidemiology_contact': int(p.get('epidemiology_contact', 0) or 0),
         'has_comorbidities': int(p.get('has_comorbidities', 0) or 0),
+        'comorbidities_detail': p.get('comorbidities_detail', ''),
 
         'fever': int(c.get('fever', 0) or 0),
         'fever_temp': float(c.get('fever_temp', 0) or 0),
@@ -454,7 +562,7 @@ def diagnose():
         'history_ulcer_recurrence': int(c.get('history_ulcer_recurrence', 0) or 0),
         'skin_rash': int(c.get('skin_rash', 0) or 0),
         'rash_type': c.get('rash_type', ''),
-        'skin_rash_location': skin_rash_location,  # ✅ SỬA: Sử dụng biến đã chuyển đổi
+        'skin_rash_location': skin_rash_location,
         'rash_stages': c.get('rash_stages', ''),
         'rash_itchiness': int(c.get('rash_itchiness', 0) or 0),
         'skin_rash_pain': int(c.get('skin_rash_pain', 0) or 0),
@@ -499,23 +607,20 @@ def diagnose():
         'viral_isolation_result': l.get('viral_isolation_result', 'NotDone'),
         'chest_xray_edema': int(l.get('chest_xray_edema', 0) or 0),
 
-        'complication_type': [], 'recommended_next_step': [], 'lab_orders': [],
-        'diagnosis_status': None, 'clinical_form': None, 'current_grade': None,
-        'priority_level': "3", 'differential_alert': None, 'stop_program': False,
-        'treatment_location': None, 'transfer_needed': False, 'oxygen_support': False,
+        'complication_type': [], 
+        'recommended_next_step': [], 
+        'lab_orders': [],
+        'diagnosis_status': None, 
+        'clinical_form': None, 
+        'current_grade': None,
+        'priority_level': "3", 
+        'differential_alert': None, 
+        'stop_program': False,
+        'treatment_location': None, 
+        'transfer_needed': False, 
+        'oxygen_support': False,
         'current_facility_level': data.get('current_facility_level', 'Tuyến trạm y tế xã / Phòng khám tư nhân')
     }
-
-    # ✅ DEBUG: In ra context sau khi xử lý
-    print("\n" + "="*80)
-    print("🔧 CONTEXT SAU KHI XỬ LÝ:")
-    print("="*80)
-    print(f"skin_rash: {ctx['skin_rash']}")
-    print(f"rash_type: {ctx['rash_type']}")
-    print(f"skin_rash_location: {ctx['skin_rash_location']}")
-    print(f"rash_stages: {ctx['rash_stages']}")
-    print(f"rash_itchiness: {ctx['rash_itchiness']}")
-    print("="*80 + "\n")
 
     conn = connect_db()
     if not conn: 
@@ -523,50 +628,15 @@ def diagnose():
     
     try:
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM rule_base")
+            cursor.execute("SELECT * FROM rule_base ORDER BY priority DESC")
             all_rules = cursor.fetchall()
         
-        rules_by_type = {
-            t: [r for r in all_rules if r['rule_type'] == t] 
-            for t in ['Complication', 'Differential', 'Diagnosis', 'Grading', 'Lab', 'Treatment']
-        }
+        # CHẠY QUY TRÌNH SUY DIỄN
+        run_python_inference(all_rules, ctx)
 
-        # === LUỒNG SUY DIỄN ĐÚNG THEO YÊU CẦU ===
-        
-        # Bước 2: Kiểm tra biến chứng
-        run_python_inference(rules_by_type['Complication'], ctx)
-        
-        # Bước 3: Phân biệt bệnh khác (CHỈ CHẠY 1 LẦN)
-        if run_python_inference(rules_by_type['Differential'], ctx):
-            if ctx.get('stop_program'):
-                save_to_db(conn, ctx)
-                return jsonify(ctx)
-
-        # Bước 4-7: Phân loại ban đầu
-        diag_base = [r for r in rules_by_type['Diagnosis'] 
-                     if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
-        
-        if not run_python_inference(diag_base, ctx, step_mode=True):
-            # KHÔNG MẮC BỆNH -> DỪNG
-            ctx['diagnosis_status'] = "Không mắc bệnh/Theo dõi thêm"
-            ctx['current_grade'] = "Không phân độ"
-            save_to_db(conn, ctx)
-            return jsonify(ctx)
-        
-        # Bước 8: Ghi đè thể tối cấp
-        run_python_inference([r for r in rules_by_type['Diagnosis'] 
-                              if r['rule_id'] in ['R_STEP8', 'R_STEP9']], ctx)
-        
-        # Bước 9: Phân độ
-        run_python_inference(rules_by_type['Grading'], ctx, step_mode=True)
-        
-        # Chỉ định cận lâm sàng
-        run_python_inference(rules_by_type['Lab'], ctx)
-        
-        # Phân tuyến điều trị
-        run_python_inference(rules_by_type['Treatment'], ctx)
-
+        # Lưu vào database
         save_to_db(conn, ctx)
+        
     finally:
         conn.close()
     

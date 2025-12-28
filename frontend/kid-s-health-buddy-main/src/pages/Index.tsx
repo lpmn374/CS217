@@ -173,31 +173,54 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // ✅ SỬA: Nhận data đã được chuyển đổi (type any vì đã transform)
   const handleSubmit = async (dataToSend: any) => {
     setIsLoading(true);
+    setResult(null);
     
     try {
       console.log("📤 Index.tsx nhận data:", dataToSend);
       
-      // ✅ Gửi trực tiếp data đã chuyển đổi
+      // Gửi trực tiếp data đã chuyển đổi
       const diagnosisResult = await runInference(dataToSend);
       
+      console.log("📥 Kết quả từ backend:", diagnosisResult);
+      
+      // Kiểm tra nếu là bệnh khác (differential)
+      const isDifferential = !!diagnosisResult?.differential_alert;
+      
+      // Kiểm tra mức độ nghiêm trọng
       const currentGrade = diagnosisResult?.current_grade || "";
       const isCritical = ['Độ 3', 'Độ 4'].some(g => currentGrade.includes(g));
       const isWarning = currentGrade.includes('2b') || currentGrade.includes('2a');
 
       setResult(diagnosisResult);
 
-      toast({
-        title: isCritical ? '⚠️ CẢNH BÁO: CA BỆNH NẶNG' : 'Kết quả phân tích',
-        description: `Chẩn đoán: ${diagnosisResult.diagnosis_status || "Nghi ngờ TCM"} - ${currentGrade || "Độ 1"}`,
-        variant: isCritical ? "destructive" : "default",
-        className: isCritical 
-          ? "bg-red-700 text-white border-2 border-white font-bold" 
-          : (isWarning ? "bg-orange-500 text-white font-bold" : "bg-green-600 text-white"),
-      });
+      // Hiển thị toast tùy theo tình huống
+      if (isDifferential) {
+        toast({
+          title: '⚠️ CẢNH BÁO: Nghi ngờ bệnh khác',
+          description: `Phát hiện: ${diagnosisResult.differential_alert}. Cần khám chuyên khoa ngay!`,
+          variant: "destructive",
+          className: "bg-orange-600 text-white border-2 border-white font-bold",
+        });
+      } else if (diagnosisResult.diagnosis_status === "Không mắc bệnh/Theo dõi thêm") {
+        toast({
+          title: 'ℹ️ Kết quả phân tích',
+          description: 'Trẻ không có dấu hiệu mắc TCM. Tiếp tục theo dõi.',
+          className: "bg-blue-600 text-white font-bold",
+        });
+      } else {
+        toast({
+          title: isCritical ? '🚨 CẢNH BÁO: CA BỆNH NẶNG' : '✅ Kết quả phân tích',
+          description: `Chẩn đoán: ${diagnosisResult.diagnosis_status || "Nghi ngờ TCM"} - ${currentGrade || "Độ 1"}`,
+          variant: isCritical ? "destructive" : "default",
+          className: isCritical 
+            ? "bg-red-700 text-white border-2 border-white font-bold" 
+            : (isWarning ? "bg-orange-500 text-white font-bold" : "bg-green-600 text-white"),
+        });
+      }
 
+      // Cuộn xuống kết quả
       setTimeout(() => {
         const resultElement = document.getElementById('diagnosis-result');
         if (resultElement) {

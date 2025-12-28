@@ -8,7 +8,7 @@ SET time_zone = "+00:00";
 
 -- 1. Bảng Patient (Thông tin hành chính)
 CREATE TABLE `Patient` (
-  `patient_id` int(11) NOT NULL AUTO_inCREMENT,
+  `patient_id` int(11) NOT NULL AUTO_INCREMENT,
   `full_name` varchar(100) NOT NULL,
   `age_months` int(11) NOT NULL,
   `gender` varchar(10) NOT NULL,
@@ -17,11 +17,11 @@ CREATE TABLE `Patient` (
   `comorbidities_detail` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`patient_id`)
-) ENGinE=innoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 2. Bảng ClinicalAssessment (Khám lâm sàng)
 CREATE TABLE `ClinicalAssessment` (
-  `ca_id` int(11) NOT NULL AUTO_inCREMENT,
+  `ca_id` int(11) NOT NULL AUTO_INCREMENT,
   `patient_id` int(11) DEFAULT NULL,
   `fever` tinyint(1) DEFAULT 0,
   `fever_temp` float DEFAULT NULL,
@@ -48,11 +48,11 @@ CREATE TABLE `ClinicalAssessment` (
   PRIMARY KEY (`ca_id`),
   CONSTRAINT `chk_temp` CHECK (`fever_temp` > 37 OR `fever` = 0),
   CONSTRAINT `fk_ca_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
-) ENGinE=innoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 3. Bảng VitalSignsNeuro (Dấu hiệu sinh tồn & Thần kinh)
 CREATE TABLE `VitalSignsNeuro` (
-  `vsn_id` int(11) NOT NULL AUTO_inCREMENT,
+  `vsn_id` int(11) NOT NULL AUTO_INCREMENT,
   `patient_id` int(11) DEFAULT NULL,
   `heart_rate` int(11) DEFAULT NULL,
   `respiratory_rate` int(11) DEFAULT NULL,
@@ -78,33 +78,33 @@ CREATE TABLE `VitalSignsNeuro` (
   `coma_gcs` int(11) DEFAULT NULL,
   PRIMARY KEY (`vsn_id`),
   CONSTRAINT `fk_vsn_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
-) ENGinE=innoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 4. Bảng LabTests (Xét nghiệm - BỔ SUNG)
+-- 4. Bảng LabTests (Xét nghiệm)
 CREATE TABLE `LabTests` (
-  `lab_id` int(11) NOT NULL AUTO_inCREMENT,
+  `lab_id` int(11) NOT NULL AUTO_INCREMENT,
   `patient_id` int(11) DEFAULT NULL,
-  `ev71_result` varchar(20) DEFAULT 'NotDone', -- Positive/Negative/NotDone
+  `ev71_result` varchar(20) DEFAULT 'NotDone',
   `other_enterovirus_result` varchar(20) DEFAULT 'NotDone',
   `viral_isolation_result` varchar(20) DEFAULT 'NotDone',
   `chest_xray_edema` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`lab_id`),
   CONSTRAINT `fk_lab_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
-) ENGinE=innoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 5. Bảng HFMDGrading (Phân độ chi tiết - BỔ SUNG)
+-- 5. Bảng HFMDGrading (Phân độ chi tiết)
 CREATE TABLE `HFMDGrading` (
-  `grading_id` int(11) NOT NULL AUTO_inCREMENT,
+  `grading_id` int(11) NOT NULL AUTO_INCREMENT,
   `patient_id` int(11) DEFAULT NULL,
   `current_grade` varchar(50) DEFAULT NULL,
-  `complication_type` text DEFAULT NULL, -- Lưu dạng chuỗi cách nhau dấu phẩy
+  `complication_type` text DEFAULT NULL,
   PRIMARY KEY (`grading_id`),
   CONSTRAINT `fk_grading_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
-) ENGinE=innoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- 6. Bảng TreatmentPlan (Kế hoạch điều trị - BỔ SUNG)
+-- 6. Bảng TreatmentPlan (Kế hoạch điều trị)
 CREATE TABLE `TreatmentPlan` (
-  `tp_id` int(11) NOT NULL AUTO_inCREMENT,
+  `tp_id` int(11) NOT NULL AUTO_INCREMENT,
   `patient_id` int(11) DEFAULT NULL,
   `treatment_location` varchar(200) DEFAULT NULL,
   `transfer_needed` tinyint(1) DEFAULT 0,
@@ -113,11 +113,11 @@ CREATE TABLE `TreatmentPlan` (
   `oxygen_support` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`tp_id`),
   CONSTRAINT `fk_tp_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
-) ENGinE=innoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 7. Bảng DiagnosticOutput (Kết quả tổng hợp cho giao diện)
 CREATE TABLE `DiagnosticOutput` (
-  `output_id` int(11) NOT NULL AUTO_inCREMENT,
+  `output_id` int(11) NOT NULL AUTO_INCREMENT,
   `patient_id` int(11) DEFAULT NULL,
   `diagnosis_status` varchar(100) DEFAULT NULL,
   `current_grade` varchar(50) DEFAULT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE `DiagnosticOutput` (
   `recommended_next_step` text DEFAULT NULL,
   PRIMARY KEY (`output_id`),
   CONSTRAINT `fk_output_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
-) ENGinE=innoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- 8. Bảng rule_base
 CREATE TABLE `rule_base` (
@@ -140,18 +140,19 @@ CREATE TABLE `rule_base` (
   `condition_if` text DEFAULT NULL,
   `action_then` text DEFAULT NULL,
   PRIMARY KEY (`rule_id`)
-) ENGinE=innoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
 -- =====================================================
--- SỬA 2 LỖI CÚ PHÁP QUAN TRỌNG
+-- LUẬT SUY DIỄN THEO QUY TRÌNH MỚI
 -- =====================================================
 
 TRUNCATE TABLE `rule_base`;
 
 INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `action_then`) VALUES
 
--- BƯỚC 2: BIẾN CHỨNG (5 LUẬT) - P: 1000
+-- =====================================================
+-- BƯỚC 1: BIẾN CHỨNG (Priority: 1000-900)
+-- =====================================================
 ('R2.3.1', 1000, 'Complication', 
 '(startle_reflex_history >= 1) or (startle_reflex_exam == 1) or (lethargy == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1)', 
 'if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); priority_level = "1"; recommended_next_step.append("Theo dõi sát, phân độ TCM liên tục, chuẩn bị chuyển tuyến nếu tiến triển. ");'),
@@ -172,67 +173,77 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 '(chest_xray_edema == 1) or ((respiratory_distress == 1) and (cyanosis == 1))', 
 'if "Hô hấp" not in complication_type: complication_type.append("Hô hấp"); if "Tim mạch" not in complication_type: complication_type.append("Tim mạch"); priority_level = "1"; recommended_next_step.append("Đặt nội khí quản – hồi sức tích cực – chuyển tuyến an toàn. ");'),
 
--- BƯỚC 3: PHÂN BIỆT (7 LUẬT) - P: 900 -> DỪNG CHƯƠNG TRÌNH
--- ✅ SỬA: Thêm dấu ngoặc đơn bao quanh chuỗi để eval() hoạt động đúng
+-- =====================================================
+-- BƯỚC 2: PHÂN BIỆT BỆNH KHÁC (Priority: 900-850) - DỪNG CHƯƠNG TRÌNH
+-- =====================================================
 ('R2.2.1', 907, 'Differential', 
-'mouth_ulcer == 1 and skin_rash == 0 and ulcer_characteristics == \'Atypical\' and history_ulcer_recurrence == 1', 
+'mouth_ulcer == 1 and skin_rash == 0 and ulcer_characteristics == "Atypical" and history_ulcer_recurrence == 1', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Ap-tơ"; stop_program = True;'),
 
 ('R2.2.2', 906, 'Differential', 
-'skin_rash == 1 and rash_type == \'Phỏng nước điển hình\' and skin_rash_location == \'Toàn thân\' and rash_stages == \'Nhiều độ tuổi\' and rash_itchiness == 1', 
+'skin_rash == 1 and rash_type == "Phỏng nước điển hình" and skin_rash_location == "Toàn thân" and rash_stages == "Nhiều độ tuổi" and rash_itchiness == 1', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Thủy đậu"; stop_program = True;'),
 
 ('R2.2.3', 905, 'Differential', 
-'skin_rash == 1 and (rash_type == \'Chấm xuất huyết\' or rash_type == \'Bầm máu\') and fever_temp >= 39.0 and mucosal_bleeding == 1', 
+'skin_rash == 1 and (rash_type == "Chấm xuất huyết" or rash_type == "Bầm máu") and fever_temp >= 39.0 and mucosal_bleeding == 1', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt xuất huyết"; stop_program = True;'),
 
 ('R2.2.4', 904, 'Differential', 
-'skin_rash == 1 and rash_type == \'Hoại tử trung tâm\' and fever_temp >= 39.0 and symptom_progression_speed == \'Very Fast\'', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Nhiễm khuẩn huyết do Não mô cầu"; stop_program = True;'),
+'skin_rash == 1 and rash_type == "Hoại tử trung tâm" and fever_temp >= 39.0 and symptom_progression_speed == "Very Fast"', 
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Nhiễm khuẩn huyết do não mô cầu"; stop_program = True;'),
 
 ('R2.2.5', 903, 'Differential', 
-'skin_rash == 1 and rash_type == \'Mụn mủ\' and skin_rash_pain == 1', 
+'skin_rash == 1 and rash_type == "Mụn mủ" and skin_rash_pain == 1', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Viêm da mủ"; stop_program = True;'),
 
 ('R2.2.6', 902, 'Differential', 
-'skin_rash == 1 and rash_type == \'Hồng ban và sần\' and post_auricular_lymph_nodes == 1', 
+'skin_rash == 1 and rash_type == "Hồng ban và sần" and post_auricular_lymph_nodes == 1', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt phát ban"; stop_program = True;'),
 
 ('R2.2.7', 901, 'Differential', 
-'skin_rash == 1 and rash_type == \'Hồng ban đa dạng\' and rash_itchiness == 1', 
+'skin_rash == 1 and rash_type == "Hồng ban đa dạng" and rash_itchiness == 1', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Dị ứng da"; stop_program = True;'),
 
--- BƯỚC 4, 5, 6, 7: PHÂN LOẠI BAN ĐẦU
--- ✅ SỬA: Thêm nháy đơn cho chuỗi trong điều kiện
+-- =====================================================
+-- BƯỚC 3: PHÂN LOẠI CA BỆNH (4-7) (Priority: 800-500)
+-- =====================================================
+-- BƯỚC 4: Ca lâm sàng điển hình
 ('R_STEP4', 800, 'Diagnosis', 
-'(mouth_ulcer == 1 and ulcer_characteristics == \'Typical\' and history_ulcer_recurrence == 0) or (skin_rash == 1 and rash_type == \'Phỏng nước điển hình\' and skin_rash_location == \'Lòng bàn tay, chân, gối, khuỷu, mông\' and epidemiology_contact == 1)', 
+'(mouth_ulcer == 1 and ulcer_characteristics == "Typical" and history_ulcer_recurrence == 0) or (skin_rash == 1 and rash_type == "Phỏng nước điển hình" and skin_rash_location == "Lòng bàn tay, chân, gối, khuỷu, mông" and epidemiology_contact == 1)', 
 'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Cấp tính"; priority_level = "2";'),
 
+-- BƯỚC 5: Ca lâm sàng không điển hình (chỉ loét miệng)
 ('R_STEP5', 700, 'Diagnosis', 
 'diagnosis_status == None and mouth_ulcer == 1 and skin_rash == 0 and epidemiology_contact == 1', 
 'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Không điển hình (Chỉ loét miệng)"; priority_level = "2";'),
 
+-- BƯỚC 6: Ca lâm sàng không điển hình (thể kín - chỉ có triệu chứng nội khoa)
 ('R_STEP6', 600, 'Diagnosis', 
 'diagnosis_status == None and mouth_ulcer == 0 and skin_rash == 0 and len(complication_type) > 0 and epidemiology_contact == 1', 
 'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Không điển hình (Thể kín)"; priority_level = "1";'),
 
+-- BƯỚC 7: Ca nghi ngờ
 ('R_STEP7', 500, 'Diagnosis', 
 'diagnosis_status == None and (fever == 1 and (poor_feeding == 1 or sore_throat == 1) and epidemiology_contact == 1 and mouth_ulcer == 0 and skin_rash == 0)', 
 'diagnosis_status = "Ca nghi ngờ TCM"; priority_level = "3";'),
 
--- BƯỚC 8: GHI ĐÈ THỂ TỐI CẤP (P: 400)
--- ✅ SỬA: Thêm nháy đơn cho chuỗi
+-- =====================================================
+-- BƯỚC 4: GHI ĐÈ THỂ TỐI CẤP (8) (Priority: 400)
+-- =====================================================
 ('R_STEP8', 400, 'Diagnosis', 
-'diagnosis_status == \'Ca lâm sàng TCM\' and symptom_progression_speed == \'Very Fast\'', 
+'diagnosis_status == "Ca lâm sàng TCM" and symptom_progression_speed == "Very Fast"', 
 'clinical_form = "Tối cấp"; priority_level = "1";'),
 
--- BƯỚC 9: GHI ĐÈ CA XÁC ĐỊNH (P: 300)
--- ✅ SỬA: Thêm nháy đơn cho chuỗi
+-- =====================================================
+-- BƯỚC 5: GHI ĐÈ CA XÁC ĐỊNH (9) (Priority: 300)
+-- =====================================================
 ('R_STEP9', 300, 'Diagnosis', 
-'ev71_result == \'Positive\' or other_enterovirus_result == \'Positive\' or viral_isolation_result == \'Positive\'', 
+'ev71_result == "Positive" or other_enterovirus_result == "Positive" or viral_isolation_result == "Positive"', 
 'diagnosis_status = "Ca xác định TCM";'),
 
--- PHÂN ĐỘ (6 LUẬT: 2.4.1 -> 2.4.6)
+-- =====================================================
+-- BƯỚC 6: PHÂN ĐỘ (Priority: 200-160)
+-- =====================================================
 ('G4', 200, 'Grading', 
 '(apnea_gasping == 1) or (cyanosis == 1 or spo2 < 92.0) or (chest_xray_edema == 1) or (unmeasurable_bp_pulse == 1) or (age_months < 12 and systolic_bp > 0 and systolic_bp < 70) or (age_months >= 12 and systolic_bp > 0 and systolic_bp < 80) or (pulse_pressure <= 25)', 
 'current_grade = "Độ 4"; priority_level = "1"; oxygen_support = True;'),
@@ -242,7 +253,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'current_grade = "Độ 3"; oxygen_support = True;'),
 
 ('G2B2', 185, 'Grading', 
-'(fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, fever_temp - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in [\'P\'])', 
+'(fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, fever_temp - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"])', 
 'current_grade = "Độ 2b (Nhóm 2)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh");'),
 
 ('G2B1', 180, 'Grading', 
@@ -257,32 +268,34 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'current_grade == None and diagnosis_status != None and (mouth_ulcer == 1 or skin_rash == 1)', 
 'current_grade = "Độ 1";'),
 
--- LUẬT CẬN LÂM SÀNG (3 LUẬT: 2.5.1 -> 2.5.3)
--- ✅ SỬA: Thêm nháy đơn cho chuỗi trong list
+-- =====================================================
+-- BƯỚC 7: CHỈ ĐỊNH CẬN LÂM SÀNG (Priority: 100-80)
+-- =====================================================
 ('L2.5.1', 100, 'Lab', 
-'current_grade in (\'Độ 2a\', \'Độ 2b (Nhóm 1)\', \'Độ 2b (Nhóm 2)\', \'Độ 3\', \'Độ 4\')', 
+'current_grade in ("Độ 2a", "Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4")', 
 'lab_orders.append("Xét nghiệm Công thức máu: Theo dõi bạch cầu và tiểu cầu. ");'),
 
 ('L2.5.2', 90, 'Lab', 
-'current_grade in (\'Độ 2b (Nhóm 1)\', \'Độ 2b (Nhóm 2)\', \'Độ 3\', \'Độ 4\')', 
+'current_grade in ("Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4")', 
 'lab_orders.append("Chỉ định đo đường huyết, điện giải đồ, X-quang phổi. Lấy mẫu xét nghiệm vi rút. ");'),
 
 ('L2.5.3', 80, 'Lab', 
-'heart_rate >= 150 or \'Tim mạch\' in complication_type', 
+'heart_rate >= 150 or "Tim mạch" in complication_type', 
 'lab_orders.append(" Chỉ định đo Troponin I, siêu âm tim. ");'),
 
--- LUẬT PHÂN TUYẾN (3 LUẬT: 2.6.1 -> 2.6.3)
--- ✅ SỬA: Thêm nháy đơn cho chuỗi
+-- =====================================================
+-- BƯỚC 8: PHÂN TUYẾN ĐIỀU TRỊ (Priority: 50-40)
+-- =====================================================
 ('T2.6.1', 50, 'Treatment', 
-'current_grade == \'Độ 1\' and age_months >= 12 and has_comorbidities == 0', 
+'current_grade == "Độ 1" and age_months >= 12 and has_comorbidities == 0', 
 'treatment_location = "Ngoại trú (Tại nhà /Trạm y tế)"; transfer_needed = False; recommended_next_step.append(" Tái khám mỗi 1–2 ngày, dặn dấu hiệu chuyển nặng. ");'),
 
 ('T2.6.2', 45, 'Treatment', 
-'current_grade == \'Độ 2a\' or (current_grade == \'Độ 1\' and (age_months < 12 or has_comorbidities == 1))', 
-'treatment_location = "Bệnh viện huyện hoặc bệnh viện tư nhân"; transfer_needed = (current_facility_level == \'Tuyến trạm y tế xã / Phòng khám tư nhân\') ; recommended_next_step.append("Nhập viện để theo dõi sát vì cơ địa trẻ có nguy cơ chuyển nặng nhanh. ");'),
+'current_grade == "Độ 2a" or (current_grade == "Độ 1" and (age_months < 12 or has_comorbidities == 1))', 
+'treatment_location = "Bệnh viện huyện hoặc bệnh viện tư nhân"; transfer_needed = (current_facility_level == "Tuyến trạm y tế xã / Phòng khám tư nhân") ; recommended_next_step.append("Nhập viện để theo dõi sát vì cơ địa trẻ có nguy cơ chuyển nặng nhanh. ");'),
 
 ('T2.6.3', 40, 'Treatment', 
-'current_grade in (\'Độ 2b (Nhóm 1)\', \'Độ 2b (Nhóm 2)\', \'Độ 3\', \'Độ 4\')', 
+'current_grade in ("Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4")', 
 'treatment_location = "Bệnh viện tỉnh hoặc Bệnh viện Nhi/Truyền nhiễm tuyến cuối"; transfer_needed = True ; priority_level = "1" ; recommended_next_step.append("Hồi sức tích cực, hội chẩn và chuyển tuyến an toàn nếu không đủ điều kiện. ")');
 
 COMMIT;
