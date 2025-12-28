@@ -300,7 +300,7 @@ interface DiagnosisFormProps {
 
 export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
   const [formData, setFormData] = useState<DiagnosisRecord>({
-    patient_id: `BN-${Date.now()}`,
+    patient_id: undefined,
     full_name: '',
     age_months: 0,
     gender: '',
@@ -444,11 +444,26 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       <Card className="shadow-sm border-t-4 border-t-orange-500">
         <CardHeader><CardTitle className="flex items-center gap-2 text-md font-bold uppercase"><Stethoscope size={18}/> Lâm sàng (Sốt - Tiêu hóa)</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <SymptomToggle label="Trẻ có sốt" checked={formData.symptoms.fever} onChange={v => updateSymptom('fever', v)} />
+          <SymptomToggle label="Trẻ có sốt" checked={formData.symptoms.fever} onChange={v => { updateSymptom('fever', v); if (!v) updateSymptom('fever_temp', 0);}} /> 
           {formData.symptoms.fever && (
-            <div className="p-3 bg-orange-50 rounded-lg space-y-3 animate-in fade-in">
+            <div className="p-3 bg-orange-50 rounded-lg space-y-3 animate-in fade-in slide-in-from-top-2">
               <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1"><Label className="text-xs font-bold">Nhiệt độ tối đa</Label><Input type="number" step="0.1" value={formData.symptoms.fever_temp} onChange={e => updateSymptom('fever_temp', parseFloat(e.target.value) || 0)} /></div>
+                <div className="space-y-1">
+                  <Label className={`text-xs font-bold ${formData.symptoms.fever_temp <= 37 ? 'text-red-500' : ''}`}>
+                    Nhiệt độ tối đa (°C)
+                  </Label>
+                  <Input 
+                    type="number" 
+                    step="0.1" 
+                    placeholder="VD: 38.5"
+                    className={formData.symptoms.fever_temp <= 37 ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    value={formData.symptoms.fever_temp || ''} 
+                    onChange={e => updateSymptom('fever_temp', parseFloat(e.target.value) || 0)} 
+                  />
+                  {formData.symptoms.fever_temp <= 37 && (
+                    <p className="text-[10px] text-red-600 font-medium">Nhiệt độ phải {'>'} 37°C khi có sốt</p>
+                  )}
+                </div>
                 <div className="space-y-1"><Label className="text-xs font-bold">Số ngày sốt</Label><Input type="number" value={formData.symptoms.fever_duration_days} onChange={e => updateSymptom('fever_duration_days', parseInt(e.target.value) || 0)} /></div>
               </div>
               <SymptomToggle label="Sốt cao không đáp ứng thuốc hạ sốt" checked={formData.symptoms.fever_refractory} onChange={v => updateSymptom('fever_refractory', v)} />
@@ -462,7 +477,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                 <Label className="text-xs font-bold">Diễn tiến bệnh</Label>
                 <Select value={formData.symptoms.symptom_progression_speed} onValueChange={v => updateSymptom('symptom_progression_speed', v)}>
                    <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
-                   <SelectContent><SelectItem value="Normal">Bình thường</SelectItem><SelectItem value="Very Fast">Rất nhanh</SelectItem></SelectContent>
+                   <SelectContent><SelectItem value="Normal">Bình thường</SelectItem><SelectItem value="Very Fast">Rất nhanh (Diễn tiến nặng trong vòng 24 - 48 giờ).</SelectItem></SelectContent>
                 </Select>
             </div>
           </div>
@@ -495,7 +510,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                     <SelectItem value="Mụn mủ">Mụn mủ</SelectItem>
                     <SelectItem value="Chấm xuất huyết">Chấm xuất huyết</SelectItem>
                     <SelectItem value="Bầm máu">Bầm máu</SelectItem>
-                    <SelectItem value="Hoại tử">Hoại tử</SelectItem>
+                    <SelectItem value="Hoại tử trung tâm">Hoại tử trung tâm</SelectItem>
                     <SelectItem value="Hồng ban và sẩn">Hồng ban xen kẽ ít dạng sẩn (Vết như muỗi chích)</SelectItem>
                     <SelectItem value="Hồng ban đa dạng">Hồng ban đa dạng</SelectItem>
                   </SelectContent>
@@ -573,8 +588,8 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
           </div>
           <div className="space-y-1">
             <SymptomToggle label="Lừ đừ / Ngủ gà" checked={formData.symptoms.lethargy} onChange={v => updateSymptom('lethargy', v)} />
-            <SymptomToggle label="Khó ngủ" checked={formData.symptoms.lethargy} onChange={v => updateSymptom('sleep_disturbance', v)} />
-            <SymptomToggle label="Quấy khóc vô cớ" checked={formData.symptoms.lethargy} onChange={v => updateSymptom('irritable_crying', v)} />
+            <SymptomToggle label="Khó ngủ" checked={formData.symptoms.sleep_disturbance} onChange={v => updateSymptom('sleep_disturbance', v)} />
+            <SymptomToggle label="Quấy khóc vô cớ" checked={formData.symptoms.irritable_crying} onChange={v => updateSymptom('irritable_crying', v)} />
             <SymptomToggle label="Mệt mỏi / Biếng chơi" checked={formData.symptoms.fatigue} onChange={v => updateSymptom('fatigue', v)} />
             <SymptomToggle label="Thất điều (Run chi/Run người/Đi loạng choạng)" checked={formData.vitals.ataxia} onChange={v => updateVital('ataxia', v)} />
             <SymptomToggle label="Rung giật nhãn cầu" checked={formData.vitals.nystagmus} onChange={v => updateVital('nystagmus', v)} />
