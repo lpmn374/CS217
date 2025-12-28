@@ -594,7 +594,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                   </SelectContent>
                 </Select>
                 <Label className="text-[10px] font-bold">Vị trí ban:</Label>
-                <Select value={formData.symptoms.skin_rash_location[0] || ""} onValueChange={v => updateSymptom('skin_rash_location', [v])}>
+                <Select value={formData.symptoms.skin_rash_location} onValueChange={v => updateSymptom('skin_rash_location', [v])}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Chọn vị trí chính" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Lòng bàn tay, chân, gối, khuỷu, mông">Lòng bàn tay, chân, gối, khuỷu, mông</SelectItem>
