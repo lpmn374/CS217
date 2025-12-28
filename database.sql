@@ -228,16 +228,16 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'diagnosis_status = "Ca nghi ngờ TCM"; priority_level = "3";'),
 
 -- =====================================================
--- BƯỚC 4: GHI ĐÈ THỂ TỐI CẤP (8) (Priority: 400)
+-- BƯỚC 4: GHI ĐÈ THỂ TỐI CẤP (8) (Priority: 400 -> 850)
 -- =====================================================
-('R_STEP8', 890, 'Diagnosis', 
+('R_STEP8', 850, 'Diagnosis', 
 'diagnosis_status == "Ca lâm sàng TCM" and symptom_progression_speed == "Very Fast"', 
 'clinical_form = "Tối cấp"; priority_level = "1";'),
 
 -- =====================================================
--- BƯỚC 5: GHI ĐÈ CA XÁC ĐỊNH (9) (Priority: 300)
+-- BƯỚC 5: GHI ĐÈ CA XÁC ĐỊNH (9) (Priority: 300 -> 890)
 -- =====================================================
-('R_STEP9', 850, 'Diagnosis', 
+('R_STEP9', 890, 'Diagnosis', 
 'ev71_result == "Positive" or other_enterovirus_result == "Positive" or viral_isolation_result == "Positive"', 
 'diagnosis_status = "Ca xác định TCM";'),
 
