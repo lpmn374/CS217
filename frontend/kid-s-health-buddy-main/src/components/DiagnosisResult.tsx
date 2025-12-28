@@ -195,22 +195,27 @@ export function DiagnosisResultDisplay({ result }: DiagnosisResultProps) {
           Kết quả chẩn đoán
         </h2>
         
+        {/* ✅ SỬA: Hiển thị differential_alert nếu có */}
         <div className={cn(
           "text-6xl font-black mb-4 drop-shadow-sm",
           isDifferential ? "text-orange-600" : "text-primary"
         )}>
-          {result.differential_alert || result.current_grade || "Theo dõi thêm"}
+          {isDifferential 
+            ? result.differential_alert 
+            : (result.current_grade || "Theo dõi thêm")
+          }
         </div>
 
         <div className="flex flex-col gap-3 items-center">
+          {/* ✅ SỬA: Luôn hiển thị diagnosis_status */}
           <Badge className={cn(
             "px-8 py-2 text-xl font-black rounded-full shadow-sm",
             isDifferential ? "bg-orange-600 hover:bg-orange-700" : "bg-primary"
           )}>
-            {result.diagnosis_status}
+            {result.diagnosis_status || "Đang xác định"}
           </Badge>
           
-          {result.clinical_form && (
+          {result.clinical_form && !isDifferential && (
             <span className="text-slate-500 font-bold italic text-lg">
               Thể lâm sàng: {result.clinical_form}
             </span>
@@ -218,81 +223,103 @@ export function DiagnosisResultDisplay({ result }: DiagnosisResultProps) {
         </div>
       </div>
 
-      {/* 2. HIỂN THỊ CÁC THÔNG TIN CHI TIẾT CỦA RESULT (Dạng Card thông tin) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        {/* Biến chứng */}
-        <Card className={cn("border-2 shadow-sm", hasComplications ? "border-red-200 bg-red-50/20" : "border-slate-100")}>
-          <CardHeader className="py-3 px-4 flex flex-row items-center gap-2 border-b">
-            <Activity className={cn("h-5 w-5", hasComplications ? "text-red-600" : "text-slate-400")} />
-            <CardTitle className="text-sm font-black uppercase">Biến chứng</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            {/* Kiểm tra Array.isArray để tránh lỗi "Property map does not exist on type string" */}
-            {Array.isArray(result.complication_type) && result.complication_type.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {result.complication_type.map((comp, i) => (
-                  <Badge key={i} variant="destructive" className="bg-red-600 animate-pulse">
-                    {comp}
-                  </Badge>
-                ))}
+      {/* 2. HIỂN THỊ CÁC THÔNG TIN CHI TIẾT (CHỈ HIỂN THỊ NẾU KHÔNG PHẢI DIFFERENTIAL) */}
+      {!isDifferential && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Biến chứng */}
+          <Card className={cn("border-2 shadow-sm", hasComplications ? "border-red-200 bg-red-50/20" : "border-slate-100")}>
+            <CardHeader className="py-3 px-4 flex flex-row items-center gap-2 border-b">
+              <Activity className={cn("h-5 w-5", hasComplications ? "text-red-600" : "text-slate-400")} />
+              <CardTitle className="text-sm font-black uppercase">Biến chứng</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              {Array.isArray(result.complication_type) && result.complication_type.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {result.complication_type.map((comp, i) => (
+                    <Badge key={i} variant="destructive" className="bg-red-600 animate-pulse">
+                      {comp}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-slate-400 text-sm italic">Chưa phát hiện biến chứng</span>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Chỉ định cận lâm sàng */}
+          <Card className={cn("border-2 shadow-sm", hasLabs ? "border-blue-200 bg-blue-50/20" : "border-slate-100")}>
+            <CardHeader className="py-3 px-4 flex flex-row items-center gap-2 border-b">
+              <ClipboardList className={cn("h-5 w-5", hasLabs ? "text-blue-600" : "text-slate-400")} />
+              <CardTitle className="text-sm font-black uppercase">Cận lâm sàng</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              {Array.isArray(result.lab_orders) && result.lab_orders.length > 0 ? (
+                <ul className="space-y-1">
+                  {result.lab_orders.map((order, i) => (
+                    <li key={i} className="text-xs font-bold text-blue-800 flex items-start gap-1">
+                      • {order}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-slate-400 text-sm italic">Không có chỉ định đặc biệt</span>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Hướng xử trí & Tuyến điều trị */}
+          <Card className="md:col-span-2 border-2 border-primary/10 shadow-md bg-slate-50/50">
+            <CardHeader className="py-3 px-4 border-b bg-white">
+              <CardTitle className="text-sm font-black uppercase flex items-center gap-2 text-primary">
+                <Info className="h-5 w-5" /> Hướng xử trí & Tuyến điều trị
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Địa điểm điều trị</span>
+                  <p className="text-lg font-black text-slate-700">{result.treatment_location || "Đang xác định..."}</p>
+                  {result.transfer_needed && (
+                    <Badge variant="outline" className="mt-1 border-red-500 text-red-600 font-bold">Cần chuyển tuyến khẩn cấp</Badge>
+                  )}
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Lời khuyên</span>
+                  <p className="text-sm font-bold text-slate-600 leading-relaxed">
+                    {result.recommended_next_step || "Tiếp tục theo dõi các dấu hiệu chuyển nặng của trẻ."}
+                  </p>
+                </div>
               </div>
-            ) : (
-              <span className="text-slate-400 text-sm italic">Chưa phát hiện biến chứng</span>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        {/* Chỉ định cận lâm sàng */}
-        <Card className={cn("border-2 shadow-sm", hasLabs ? "border-blue-200 bg-blue-50/20" : "border-slate-100")}>
-          <CardHeader className="py-3 px-4 flex flex-row items-center gap-2 border-b">
-            <ClipboardList className={cn("h-5 w-5", hasLabs ? "text-blue-600" : "text-slate-400")} />
-            <CardTitle className="text-sm font-black uppercase">Cận lâm sàng</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            {/* Thay vì chỉ dùng hasLabs, hãy kiểm tra Array.isArray trực tiếp ở đây */}
-            {Array.isArray(result.lab_orders) && result.lab_orders.length > 0 ? (
-              <ul className="space-y-1">
-                {result.lab_orders.map((order, i) => (
-                  <li key={i} className="text-xs font-bold text-blue-800 flex items-start gap-1">
-                    • {order}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <span className="text-slate-400 text-sm italic">Không có chỉ định đặc biệt</span>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Hướng xử trí & Tuyến điều trị (Chiếm 2 cột trên màn hình MD) */}
-        <Card className="md:col-span-2 border-2 border-primary/10 shadow-md bg-slate-50/50">
+      {/* ✅ SỬA: Hiển thị lời khuyên đặc biệt cho trường hợp Differential */}
+      {isDifferential && (
+        <Card className="border-2 border-orange-200 shadow-md bg-orange-50">
           <CardHeader className="py-3 px-4 border-b bg-white">
-            <CardTitle className="text-sm font-black uppercase flex items-center gap-2 text-primary">
-              <Info className="h-5 w-5" /> Hướng xử trí & Tuyến điều trị
+            <CardTitle className="text-sm font-black uppercase flex items-center gap-2 text-orange-600">
+              <AlertCircle className="h-5 w-5" /> Cảnh báo quan trọng
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Địa điểm điều trị</span>
-                <p className="text-lg font-black text-slate-700">{result.treatment_location || "Đang xác định..."}</p>
-                {result.transfer_needed && (
-                  <Badge variant="outline" className="mt-1 border-red-500 text-red-600 font-bold">Cần chuyển tuyến khẩn cấp</Badge>
-                )}
-              </div>
-              <div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Lời khuyên chuyên gia</span>
-                <p className="text-sm font-bold text-slate-600 leading-relaxed">
-                  {result.recommended_next_step || "Tiếp tục theo dõi các dấu hiệu chuyển nặng của trẻ."}
-                </p>
-              </div>
+          <CardContent className="p-6">
+            <p className="text-base font-bold text-orange-900">
+              Trẻ có dấu hiệu nghi ngờ mắc <strong>{result.differential_alert}</strong>. 
+              Vui lòng đưa trẻ đến bệnh viện ngay để được thăm khám và xác định chẩn đoán chính xác.
+            </p>
+            <div className="mt-4 p-4 bg-orange-100 rounded-lg border-2 border-orange-300">
+              <p className="text-sm font-bold text-orange-800">
+                ⚠️ KHÔNG TỰ Ý ĐIỀU TRỊ TẠI NHÀ - CẦN KHÁM CHUYÊN KHOA
+              </p>
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
 
-      {/* 3. CÂY SUY DIỄN (FLOWCHART) */}
+      {/* 3. CÂY SUY DIỄN (FLOWCHART) - Chỉ hiển thị nếu có */}
       {result.inferenceSteps && result.inferenceSteps.length > 0 && (
         <Card className="border-2 shadow-md overflow-hidden bg-white">
           <CardHeader className="bg-slate-50 border-b py-4 text-center">

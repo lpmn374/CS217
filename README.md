@@ -64,7 +64,7 @@
     ```bash
     npm run dev
     ```
-    * 📍 **Truy cập giao diện tại:** `http://localhost:5173`
+    * 📍 **Truy cập giao diện tại:** `http://localhost:8080` (Tùy cài đặt của bạn)
 
 ---
 ### **📌 Cấu trúc quan hệ dữ liệu (ERD)**

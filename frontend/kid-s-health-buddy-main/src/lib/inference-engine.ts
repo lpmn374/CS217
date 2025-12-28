@@ -223,32 +223,32 @@
 // }
 
 
-// HFMD Forward Chaining Inference Engine - FULL VERSION 2024 (Updated with Grading Rules)
+// HFMD Forward Chaining Inference Engine - FULL VERSION 2024
 
 // 1. Nhóm Lâm sàng (ClinicalAssessment)
 export interface Symptoms {
   fever: boolean;
   fever_temp: number;
   fever_duration_days: number;
-  fever_refractory: boolean; // Không đáp ứng thuốc hạ sốt (Dùng cho 2b-N2)
+  fever_refractory: boolean;
   
   mouth_ulcer: boolean;
   ulcer_characteristics: 'Typical' | 'Atypical';
   history_ulcer_recurrence: boolean;
   
   skin_rash: boolean;
-  skin_rash_location: 'Lòng bàn tay, chân, gối, khuỷu, mông' | 'Toàn thân' ;
-  rash_type: 'Phỏng nước điển hình' | 'Mụn mủ' | 'Chấm xuất huyết' | 'Bầm máu' | 'Hoại tử trung tâm' | 'Hồng ban và sẩn' | 'Hồng ban đa dạng';
+  skin_rash_location: string | string[]; // ✅ Cho phép cả string và array
+  rash_type: string;
   rash_itchiness: boolean;
-  rash_stages: 'Đồng đều' | 'Nhiều độ tuổi';
+  rash_stages: string;
   skin_rash_pain: boolean;
   post_auricular_lymph_nodes: boolean;
   mucosal_bleeding: boolean;
   
   vomiting: boolean;
-  lethargy: boolean; // Lừ đừ
-  sleep_disturbance: boolean; // Khó ngủ (Dùng cho 2a)
-  irritable_crying: boolean; // Quấy khóc vô cớ (Dùng cho 2a)
+  lethargy: boolean;
+  sleep_disturbance: boolean;
+  irritable_crying: boolean;
   
   poor_feeding: boolean;
   sore_throat: boolean;
@@ -256,52 +256,44 @@ export interface Symptoms {
   symptom_progression_speed: 'Normal' | 'Very Fast';
 }
 
-// 2. Nhóm Sinh hiệu & Thần kinh (VitalSigns_Neuro)
+// 2. Nhóm Sinh hiệu & Thần kinh
 export interface Vitals {
   heart_rate: number;
   respiratory_rate: number;
   systolic_bp: number;
   diastolic_bp: number; 
-  pulse_pressure: number; // Hiệu áp (Sẽ được tính: Systolic - Diastolic)
-  unmeasurable_bp_pulse: boolean; // Mạch không bắt được, HA không đo được (Độ 4)
-  capillary_refill_time: number;  // Thời gian đổ đầy mao mạch (giây)
+  pulse_pressure: number;
+  unmeasurable_bp_pulse: boolean;
+  capillary_refill_time: number;
   respiratory_rate_high: boolean;
-  stridor: boolean; //Thở rít thanh quản.
+  stridor: boolean;
   spo2: number;
   coma_gcs: number;
-  avpu_score: 'A' | 'V' | 'P' | 'U'; // Rối loạn tri giác (P/A VPU dùng cho 2b-N2)
+  avpu_score: 'A' | 'V' | 'P' | 'U';
   
-  // Giật mình
-  startle_reflex_history: number; // Số lần/30p theo bệnh sử
-  startle_reflex_exam: boolean; // Lúc khám
+  startle_reflex_history: number;
+  startle_reflex_exam: boolean;
   
-  // Thần kinh & Biến chứng
-  ataxia: boolean; // Thất điều
-  nystagmus: boolean; // Rung giật nhãn cầu
-  squint: boolean; // Lác mắt (Độ 2b-N2)
-  limb_weakness: boolean; // Yếu/Liệt chi
-  muscle_tone_increased: boolean; // Tăng trương lực cơ
-  cranial_nerve_palsy: boolean; // Liệt thần kinh sọ (nuốt sặc, đổi giọng)
+  ataxia: boolean;
+  nystagmus: boolean;
+  squint: boolean;
+  limb_weakness: boolean;
+  muscle_tone_increased: boolean;
+  cranial_nerve_palsy: boolean;
   
-  // Hô hấp & Vận mạch
-  respiratory_distress: boolean; // Thở nhanh, khó thở, thở rít (Độ 3)
-  apnea_gasping: boolean; // Ngưng thở, thở dốc (Độ 4)
-  cyanosis: boolean; // Tím tái (Độ 4)
-  mottled_skin: boolean; // Da nổi bông (Độ 3)
-  sweating: boolean; // Vã mồ hôi (Độ 3)
+  respiratory_distress: boolean;
+  apnea_gasping: boolean;
+  cyanosis: boolean;
+  mottled_skin: boolean;
+  sweating: boolean;
 }
 
-// 3. Nhóm Xét nghiệm (LabTests)
+// 3. Nhóm Xét nghiệm
 export interface LabTests {
-  // wbc_count: number;
-  // blood_glucose: number;
-  // platelet_count: number;
-  // crp_level: number;
   ev71_result: 'Positive' | 'Negative' | 'NotDone';
-  other_enterovirus_result: 'Positive' | 'Negative' | 'NotDone'; // Coxsackie A16, A6... ngoài EV71. 
-  viral_isolation_result: 'Positive' | 'Negative' | 'NotDone'; //Kết quả phân lập virus (Nuôi cấy)
-  // troponin_i: number;
-  chest_xray_edema: boolean; // X-quang phổi có hình ảnh phù phổi không
+  other_enterovirus_result: 'Positive' | 'Negative' | 'NotDone';
+  viral_isolation_result: 'Positive' | 'Negative' | 'NotDone';
+  chest_xray_edema: boolean;
 }
 
 export interface InferenceStep {
@@ -314,54 +306,26 @@ export interface InferenceStep {
 
 // 4. Kết quả chẩn đoán & Phân độ
 export interface DiagnosisResult {
-  // diagnosis_status: 'Ca xác định TCM' | 'Ca lâm sàng TCM' | 'Nghi ngờ bệnh khác' | 'Chưa đủ dữ liệu'| 'Ca nghi ngờ TCM' | 'Không mắc bệnh';
-  // clinical_form: 'Cấp tính' | 'Không điển hình (Chỉ loét miệng)' | 'Không điển hình (Thể kín)' | 'Tối cấp';
-  // current_grade: 'Độ 1' | 'Độ 2a' | 'Độ 2b (Nhóm 1)' | 'Độ 2b (Nhóm 2)' | 'Độ 3' | 'Độ 4';
-  // priority_level: '1' | '2' | '3'; // 1 (cao nhất), 2 (trung bình), 3(thấp nhất).
-  // complication_type: string;
-  // differential_alert: 'Ap tơ' | 'Thủy đậu' | 'Sốt xuất huyết/Nhiễm khuẩn huyết' | 'Viêm da mủ' | 'Dị ứng' | 'Sốt phát ban';
-  // primary_evidence: string ;
-  // treatment_location: string;
-  // transfer_needed: boolean;
-  // current_facility_level: string;
-  // warning_signs: string[] ; //Các dấu hiệu cảnh báo cần theo dõi sát (Ví dụ: Mạch > 130, Sốt cao khó hạ).
-  // oxygen_support: boolean;
-  // recommended_next_step: string;
-  // lab_orders: string;
-
-  // Đồng bộ với 9 bước chẩn đoán
   diagnosis_status: string;
   clinical_form: string | null;
   current_grade: string | null;
-  resultGrade?: string; // Dùng dự phòng cho UI cũ
+  resultGrade?: string;
   priority_level: '1' | '2' | '3';
-  complication_type: string | string[]; // Backend trả về chuỗi hoặc mảng
+  complication_type: string | string[];
   differential_alert?: string | null;
   treatment_location: string;
-  recommended_next_step: string;
-  treatment?: string; // Alias cho recommended_next_step trong UI
-  lab_orders: string | string[]; // Backend trả về chuỗi hoặc mảng
+  recommended_next_step: string | string[];
+  treatment?: string;
+  lab_orders: string | string[];
   stop_program?: boolean; 
-  isClinicalCase?: boolean; // Cờ để UI hiển thị màu sắc TCM
+  isClinicalCase?: boolean;
   inferenceSteps?: InferenceStep[];
   transfer_needed?: boolean;
 }
 
 // 5. Hồ sơ bệnh nhân
 export interface DiagnosisRecord {
-  // patient_id?: string ;
-  // full_name: string;
-  // age_months: number;
-  // gender: string;
-  // epidemiology_contact: boolean;
-  // has_comorbidities: boolean;
-  // comorbidities_detail: string;
-  // symptoms: Symptoms;
-  // vitals: Vitals;
-  // labTests: LabTests;
-  // result?: DiagnosisResult;
-
-  patient_id?: number; // Đổi sang number để khớp với AUTO_INCREMENT của SQL
+  patient_id?: number;
   full_name: string;
   age_months: number;
   gender: string;
@@ -377,56 +341,74 @@ export interface DiagnosisRecord {
 const API_BASE_URL = 'http://127.0.0.1:5000';
 
 /**
- * Thực hiện chạy suy diễn (Inference)
- * Tự động tính hiệu áp trước khi gửi dữ liệu
+ * ✅ SỬA: Nhận data đã được chuyển đổi từ DiagnosisForm
+ * Không còn tự chuyển đổi nữa vì DiagnosisForm đã làm rồi
  */
-export async function runInference(formData: DiagnosisRecord): Promise<DiagnosisResult> {
+export async function runInference(dataToSend: any): Promise<DiagnosisResult> {
   try {
-    if (formData.vitals.systolic_bp && formData.vitals.diastolic_bp) {
-      formData.vitals.pulse_pressure = formData.vitals.systolic_bp - formData.vitals.diastolic_bp;
-    }
+    console.log("🚀 Data gửi đến Backend:", dataToSend);
 
     const response = await fetch(`${API_BASE_URL}/diagnose`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        patient: {
-          full_name: formData.full_name,
-          age_months: formData.age_months,
-          gender: formData.gender,
-          epidemiology_contact: formData.epidemiology_contact,
-          has_comorbidities: formData.has_comorbidities
-        },
-        clinical: formData.symptoms,
-        vitals: formData.vitals,
-        lab: formData.labTests
-      }) 
+      body: JSON.stringify(dataToSend) // ✅ Gửi data đã được chuyển đổi từ Form
     });
     
-    if (!response.ok) throw new Error('Lỗi kết nối Backend');
-    const result = await response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Backend error:", errorText);
+      throw new Error('Lỗi kết nối Backend');
+    }
     
-    // Đảm bảo các trường danh sách không bao giờ null để tránh lỗi .includes() hoặc .map()
+    const result = await response.json();
+    console.log("✅ Kết quả từ Backend:", result);
+    
+    // Đảm bảo các trường danh sách không bao giờ null
     return {
       ...result,
-      complication_type: Array.isArray(result.complication_type) ? result.complication_type : [],
-      lab_orders: Array.isArray(result.lab_orders) ? result.lab_orders : [],
-      recommended_next_step: Array.isArray(result.recommended_next_step) ? result.recommended_next_step : []
+      complication_type: Array.isArray(result.complication_type) 
+        ? result.complication_type 
+        : (result.complication_type ? result.complication_type.split(', ') : []),
+      lab_orders: Array.isArray(result.lab_orders) 
+        ? result.lab_orders 
+        : (result.lab_orders ? result.lab_orders.split(', ') : []),
+      recommended_next_step: Array.isArray(result.recommended_next_step) 
+        ? result.recommended_next_step.join(' ') 
+        : (result.recommended_next_step || ''),
+      // Thêm alias cho compatibility với UI cũ
+      treatment: Array.isArray(result.recommended_next_step) 
+        ? result.recommended_next_step.join(' ') 
+        : (result.recommended_next_step || ''),
+      isClinicalCase: result.diagnosis_status !== 'Không mắc bệnh/Theo dõi thêm',
+      resultGrade: result.current_grade
     };
   } catch (error) {
-    console.error("Inference Error:", error);
+    console.error("❌ Inference Error:", error);
     throw error;
   }
 }
 
 export async function getHistory(): Promise<DiagnosisRecord[]> {
-  const response = await fetch(`${API_BASE_URL}/history`);
-  return await response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}/history`);
+    if (!response.ok) throw new Error('Không thể lấy lịch sử');
+    return await response.json();
+  } catch (error) {
+    console.error("Lỗi lấy lịch sử:", error);
+    return [];
+  }
 }
 
 export async function deleteDiagnosis(id: number): Promise<boolean> {
-  const response = await fetch(`${API_BASE_URL}/delete_patient/${id}`, { method: 'DELETE' });
-  return response.ok;
+  try {
+    const response = await fetch(`${API_BASE_URL}/delete_patient/${id}`, { 
+      method: 'DELETE' 
+    });
+    return response.ok;
+  } catch (error) {
+    console.error("Lỗi xóa:", error);
+    return false;
+  }
 }
 
 export const generateId = () => Math.random().toString(36).substring(2, 9);

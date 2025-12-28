@@ -158,15 +158,13 @@
 
 // export default Index;
 
+// Example: Cách sử dụng DiagnosisForm và runInference đúng cách
+
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { DiagnosisForm } from '@/components/DiagnosisForm';
 import { DiagnosisResultDisplay } from '@/components/DiagnosisResult';
-import { 
-  runInference, 
-  DiagnosisResult,
-  DiagnosisRecord
-} from '@/lib/inference-engine';
+import { runInference, DiagnosisResult } from '@/lib/inference-engine';
 import { useToast } from '@/hooks/use-toast';
 import { Baby, ShieldCheck, Activity, AlertTriangle } from 'lucide-react';
 
@@ -175,24 +173,22 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (data: DiagnosisRecord) => {
+  // ✅ SỬA: Nhận data đã được chuyển đổi (type any vì đã transform)
+  const handleSubmit = async (dataToSend: any) => {
     setIsLoading(true);
-    // Lưu ý: Không nên set null ngay lập tức để tránh giao diện bị "giật"
     
     try {
-      // 1. Gửi dữ liệu sang Backend
-      const diagnosisResult = await runInference(data);
+      console.log("📤 Index.tsx nhận data:", dataToSend);
       
-      // 2. Kiểm tra an toàn giá trị trả về
+      // ✅ Gửi trực tiếp data đã chuyển đổi
+      const diagnosisResult = await runInference(dataToSend);
+      
       const currentGrade = diagnosisResult?.current_grade || "";
-      
-      // 3. Xác định mức độ nghiêm trọng (Sửa logic an toàn tại đây)
       const isCritical = ['Độ 3', 'Độ 4'].some(g => currentGrade.includes(g));
       const isWarning = currentGrade.includes('2b') || currentGrade.includes('2a');
 
       setResult(diagnosisResult);
 
-      // 4. Hiển thị thông báo
       toast({
         title: isCritical ? '⚠️ CẢNH BÁO: CA BỆNH NẶNG' : 'Kết quả phân tích',
         description: `Chẩn đoán: ${diagnosisResult.diagnosis_status || "Nghi ngờ TCM"} - ${currentGrade || "Độ 1"}`,
@@ -202,7 +198,6 @@ const Index = () => {
           : (isWarning ? "bg-orange-500 text-white font-bold" : "bg-green-600 text-white"),
       });
 
-      // 5. Cuộn xuống phần kết quả
       setTimeout(() => {
         const resultElement = document.getElementById('diagnosis-result');
         if (resultElement) {
@@ -211,7 +206,7 @@ const Index = () => {
       }, 150);
 
     } catch (error: any) {
-      console.error("Lỗi Inference:", error);
+      console.error("❌ Lỗi Inference:", error);
       toast({
         variant: "destructive",
         title: "Lỗi kết nối",
@@ -227,7 +222,6 @@ const Index = () => {
       <Header />
       
       <main className="container py-8">
-        {/* Header Section */}
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 border border-blue-100 mb-4">
             <ShieldCheck className="h-4 w-4" />
@@ -242,7 +236,6 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Feature Cards */}
         <div className="flex justify-center mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
             <div className="flex items-center gap-4 p-5 bg-white rounded-2xl shadow-sm border border-border/60 hover:border-primary/40 transition-colors">
@@ -266,7 +259,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Khối Form Nhập Liệu */}
         <div className="max-w-6xl mx-auto">
           <div className="mb-4 flex items-center gap-2 text-muted-foreground ml-1">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -275,7 +267,6 @@ const Index = () => {
           <DiagnosisForm onSubmit={handleSubmit} isLoading={isLoading} />
         </div>
 
-        {/* Khối Hiển Thị Kết Quả */}
         {result && (
           <div id="diagnosis-result" className="mt-16 animate-in fade-in slide-in-from-bottom-10 duration-700">
             <div className="flex items-center justify-center gap-4 mb-10">
@@ -288,7 +279,6 @@ const Index = () => {
             
             <DiagnosisResultDisplay result={result} />
             
-            {/* Cảnh báo an toàn */}
             <div className="mt-10 p-6 bg-red-50 border-2 border-red-100 rounded-3xl max-w-4xl mx-auto flex gap-5 shadow-sm">
               <div className="shrink-0 bg-red-100 h-12 w-12 rounded-2xl flex items-center justify-center">
                 <AlertTriangle className="text-red-600 h-7 w-7" />
