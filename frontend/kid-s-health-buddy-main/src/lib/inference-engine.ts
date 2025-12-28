@@ -237,7 +237,7 @@ export interface Symptoms {
   history_ulcer_recurrence: boolean;
   
   skin_rash: boolean;
-  skin_rash_location: string | string[]; // ✅ Cho phép cả string và array
+  skin_rash_location: string; // ✅ Cho phép cả string và array
   rash_type: string;
   rash_itchiness: boolean;
   rash_stages: string;
