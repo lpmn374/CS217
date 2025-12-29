@@ -159,7 +159,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); priority_level = "1"; recommended_next_step.append("Theo dõi sát, phân độ TCM liên tục, chuẩn bị chuyển tuyến nếu tiến triển. ");'),
 
 ('R2.3.2', 995, 'Complication', 
-'(limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (avpu_score in ("P", "U")) or (coma_gcs < 8)', 
+'(limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (avpu_score in ["P", "U"]) or (coma_gcs < 8)', 
 'if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); priority_level = "1"; recommended_next_step.append("Hồi sức tích cực – chuyển tuyến chuyên sâu. ");'),
 
 ('R2.3.3', 990, 'Complication', 
