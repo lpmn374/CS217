@@ -277,7 +277,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { 
   User, Activity, Stethoscope, Beaker, 
-  Brain, MapPin, HeartPulse, ClipboardCheck, AlertCircle 
+  Brain, MapPin, HeartPulse, ClipboardCheck, AlertCircle
 } from 'lucide-react';
 import { Symptoms, Vitals, LabTests, DiagnosisRecord } from '@/lib/inference-engine';
 
@@ -299,10 +299,12 @@ interface DiagnosisFormProps {
 }
 
 export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const [formData, setFormData] = useState<DiagnosisRecord>({
     patient_id: undefined,
     full_name: '',
-    age_months: 0,
+    age_months: undefined,
     gender: '',
     epidemiology_contact: false,
     has_comorbidities: false,
@@ -310,7 +312,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
     symptoms: {
       fever: false,
       fever_temp: 39,
-      fever_duration_days: 0,
+      fever_duration_days: undefined,
       fever_refractory: false,
       symptom_progression_speed: 'Normal',
       mouth_ulcer: false,
@@ -380,14 +382,27 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
     }
   }, [formData.vitals.systolic_bp, formData.vitals.diastolic_bp]);
 
-  const updateSymptom = (key: keyof Symptoms, value: any) => {
-    setFormData(prev => ({ ...prev, symptoms: { ...prev.symptoms, [key]: value } }));
-  };
-
+  // Hàm update dùng chung kèm rào >= 0
   const updateVital = (key: keyof Vitals, value: any) => {
-    setFormData(prev => ({ ...prev, vitals: { ...prev.vitals, [key]: value } }));
+    // Chỉ rào các trường kiểu số (trừ các trường boolean)
+    let safeValue = value;
+    if (typeof value === 'number' && key !== 'avpu_score') {
+      safeValue = Math.max(0, value);
+    }
+    setFormData(prev => ({ ...prev, vitals: { ...prev.vitals, [key]: safeValue } }));
   };
 
+  const updateSymptom = (key: keyof Symptoms, value: any) => {
+    let safeValue = value;
+    if (key === 'fever_duration_days') {
+      safeValue = Math.max(0, value);
+    }
+    setFormData(prev => ({ ...prev, symptoms: { ...prev.symptoms, [key]: safeValue } }));
+  };
+
+  // const updateVital = (key: keyof Vitals, value: any) => {
+  //   setFormData(prev => ({ ...prev, vitals: { ...prev.vitals, [key]: value } }));
+  // });
   const updateLab = (key: keyof LabTests, value: any) => {
     setFormData(prev => ({ ...prev, labTests: { ...prev.labTests, [key]: value } }));
   };
@@ -483,35 +498,81 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
     >  
       {/* 1. HÀNH CHÍNH & DỊCH TỄ */}
       <Card className="shadow-sm border-t-4 border-t-blue-500">
-        <CardHeader><CardTitle className="flex items-center gap-2 text-md font-bold uppercase"><User size={18}/> Bệnh nhân & Dịch tễ</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-md font-bold uppercase">
+            <User size={18}/> Bệnh nhân & Dịch tễ
+          </CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-1"><Label className="text-xs">Họ tên trẻ</Label><Input value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} required /></div>
+          {/* Họ tên */}
+          <div className="space-y-1">
+            <Label className="text-xs">Họ tên trẻ (Có thể viết tắt)</Label>
+            <Input 
+              value={formData.full_name} 
+              onChange={e => setFormData({...formData, full_name: e.target.value})} 
+              required 
+            />
+          </div>
+          <div className="space-y-1">
+              <Label className="text-xs font-bold text-blue-600">Số tháng tuổi</Label>
+              <Input 
+                type="number" 
+                min="0"
+                max="180"
+                value={formData.age_months} 
+                onChange={e => setFormData(prev => ({ 
+                  ...prev, 
+                  age_months: Math.max(0, parseInt(e.target.value) || 0) 
+                }))} 
+                required 
+              />
+            </div>
           <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1"><Label className="text-xs">Tuổi (tháng)</Label><Input type="number" value={formData.age_months} onChange={e => setFormData({...formData, age_months: parseInt(e.target.value) || 0})} required /></div>
+            {/* Giới tính */}
             <div className="space-y-1">
               <Label className="text-xs">Giới tính</Label>
               <Select value={formData.gender} onValueChange={v => setFormData({...formData, gender: v})}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="Nam">Nam</SelectItem><SelectItem value="Nữ">Nữ</SelectItem></SelectContent>
+                <SelectContent>
+                  <SelectItem value="Nam">Nam</SelectItem>
+                  <SelectItem value="Nữ">Nữ</SelectItem>
+                </SelectContent>
               </Select>
             </div>
           </div>
-          <SymptomToggle label="Tiếp xúc nguồn lây / Vùng dịch" checked={formData.epidemiology_contact} onChange={v => setFormData({...formData, epidemiology_contact: v})} />
+          <SymptomToggle 
+            label="Tiếp xúc nguồn lây / Vùng dịch" 
+            checked={formData.epidemiology_contact} 
+            onChange={v => setFormData({...formData, epidemiology_contact: v})} 
+          />
           
           <div className="pt-2 bg-slate-50 p-2 rounded-lg space-y-2 border border-slate-200">
-            <SymptomToggle label="Có bệnh lý đồng mắc" checked={formData.has_comorbidities} onChange={v => setFormData({...formData, has_comorbidities: v})} />
+            <SymptomToggle 
+              label="Có bệnh lý đồng mắc" 
+              checked={formData.has_comorbidities} 
+              onChange={v => setFormData({...formData, has_comorbidities: v})} 
+            />
             {formData.has_comorbidities && (
               <div className="space-y-2 animate-in fade-in">
                 <Label className="text-[10px] font-bold text-slate-500">Chọn bệnh nền phổ biến:</Label>
                 <div className="grid grid-cols-2 gap-1">
                   {COMMON_COMORBIDITIES.map(disease => (
                     <div key={disease} className="flex items-center space-x-2">
-                      <Checkbox id={disease} checked={formData.comorbidities_detail.includes(disease)} onCheckedChange={() => handleComorbidityToggle(disease)} />
+                      <Checkbox 
+                        id={disease} 
+                        checked={formData.comorbidities_detail.includes(disease)} 
+                        onCheckedChange={() => handleComorbidityToggle(disease)} 
+                      />
                       <Label htmlFor={disease} className="text-[10px] cursor-pointer">{disease}</Label>
                     </div>
                   ))}
                 </div>
-                <Textarea placeholder="Ghi chú thêm bệnh nền khác..." value={formData.comorbidities_detail} onChange={e => setFormData({...formData, comorbidities_detail: e.target.value})} className="text-xs h-16 bg-white" />
+                <Textarea 
+                  placeholder="Ghi chú thêm bệnh nền khác..." 
+                  value={formData.comorbidities_detail} 
+                  onChange={e => setFormData({...formData, comorbidities_detail: e.target.value})} 
+                  className="text-xs h-16 bg-white" 
+                />
               </div>
             )}
           </div>
@@ -542,7 +603,22 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                     <p className="text-[10px] text-red-600 font-medium">Nhiệt độ phải {'>'} 37°C khi có sốt</p>
                   )}
                 </div>
-                <div className="space-y-1"><Label className="text-xs font-bold">Số ngày sốt</Label><Input type="number" value={formData.symptoms.fever_duration_days} onChange={e => updateSymptom('fever_duration_days', parseInt(e.target.value) || 0)} /></div>
+                <div className="space-y-1">
+                  <Label className={`text-xs font-bold ${formData.symptoms.fever_duration_days < 1 ? 'text-red-500' : ''}`}>
+                    Số ngày sốt
+                  </Label>
+                  <Input 
+                    type="number" 
+                    step="0.1" 
+                    placeholder="VD: 1"
+                    className={formData.symptoms.fever_duration_days < 1 ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    value={formData.symptoms.fever_duration_days || ''} 
+                    onChange={e => updateSymptom('fever_duration_days', parseInt(e.target.value) || 0)} 
+                  />
+                  {formData.symptoms.fever_duration_days < 1 && (
+                    <p className="text-[10px] text-red-600 font-medium">Số ngày sốt phải tính {'>='} 1 ngày </p>
+                  )}
+                </div>
               </div>
               <SymptomToggle label="Sốt cao không đáp ứng thuốc hạ sốt" checked={formData.symptoms.fever_refractory} onChange={v => updateSymptom('fever_refractory', v)} />
             </div>
@@ -625,18 +701,18 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
         <CardHeader><CardTitle className="flex items-center gap-2 text-md font-bold uppercase"><HeartPulse size={18} /> Sinh hiệu & Hô hấp</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label className="text-xs">Mạch (l/p)</Label><Input type="number" value={formData.vitals.heart_rate} onChange={e => updateVital('heart_rate', parseInt(e.target.value) || 0)} /></div>
-            <div className="space-y-1"><Label className="text-xs">Nhịp thở (l/p)</Label><Input type="number" value={formData.vitals.respiratory_rate} onChange={e => updateVital('respiratory_rate', parseInt(e.target.value) || 0)} /></div>
-            <div className="space-y-1"><Label className="text-xs">HA Tâm thu</Label><Input type="number" value={formData.vitals.systolic_bp} onChange={e => updateVital('systolic_bp', parseInt(e.target.value) || 0)} /></div>
-            <div className="space-y-1"><Label className="text-xs">HA Tâm trương</Label><Input type="number" value={formData.vitals.diastolic_bp} onChange={e => updateVital('diastolic_bp', parseInt(e.target.value) || 0)} /></div>
-            <div className="space-y-1"><Label className="text-xs">SpO2 (%)</Label><Input type="number" value={formData.vitals.spo2} onChange={e => updateVital('spo2', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-xs">Mạch (l/p)</Label><Input type="number" min="0" value={formData.vitals.heart_rate} onChange={e => updateVital('heart_rate', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-xs">Nhịp thở (l/p)</Label><Input type="number" min="0" value={formData.vitals.respiratory_rate} onChange={e => updateVital('respiratory_rate', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-xs">HA Tâm thu</Label><Input type="number" min="0" value={formData.vitals.systolic_bp} onChange={e => updateVital('systolic_bp', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-xs">HA Tâm trương</Label><Input type="number" min="0" value={formData.vitals.diastolic_bp} onChange={e => updateVital('diastolic_bp', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-xs">SpO2 (%)</Label><Input type="number" min="0" max="100" value={formData.vitals.spo2} onChange={e => updateVital('spo2', parseInt(e.target.value) || 0)} /></div>
             <div className="space-y-1">
               <Label className={`text-xs font-bold ${formData.vitals.pulse_pressure <= 20 ? 'text-white bg-red-600 px-1 rounded' : 'text-red-600'}`}>Hiệu áp (PP)</Label>
               <div className={`h-9 flex items-center px-3 border rounded-md font-black transition-all ${formData.vitals.pulse_pressure <= 20 ? 'bg-red-600 text-white animate-bounce' : 'bg-red-50 text-red-700 border-red-200'}`}>
                 {formData.vitals.pulse_pressure}
               </div>
             </div>
-            <div className="space-y-1"><Label className="text-xs">Thời gian đổ đầy mao mạch (giây)</Label><Input type="number" value={formData.vitals.capillary_refill_time} onChange={e => updateVital('capillary_refill_time', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-xs">Thời gian đổ đầy mao mạch (giây)</Label><Input type="number" min="0" value={formData.vitals.capillary_refill_time} onChange={e => updateVital('capillary_refill_time', parseInt(e.target.value) || 0)} /></div>
           </div>
           <div className="bg-red-50 p-3 rounded-lg space-y-1 border border-red-100">
             <SymptomToggle label="Mạch/HA không đo được" checked={formData.vitals.unmeasurable_bp_pulse} onChange={v => updateVital('unmeasurable_bp_pulse', v)} />
@@ -660,7 +736,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
           <div className="bg-purple-50 p-2 rounded border border-purple-100">
             <div className="flex items-center justify-between mb-2">
               <Label className="text-xs font-bold text-purple-900">Giật mình (lần/30p)</Label>
-              <Input type="number" className="w-16 h-8 border-purple-300" value={formData.vitals.startle_reflex_history} onChange={e => updateVital('startle_reflex_history', parseInt(e.target.value) || 0)} />
+              <Input type="number" min="0" className="w-16 h-8 border-purple-300" value={formData.vitals.startle_reflex_history} onChange={e => updateVital('startle_reflex_history', parseInt(e.target.value) || 0)} />
             </div>
             <SymptomToggle label="Giật mình ghi nhận lúc khám" checked={formData.vitals.startle_reflex_exam} onChange={v => updateVital('startle_reflex_exam', v)} />
           </div>
@@ -683,7 +759,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                 <SelectContent><SelectItem value="A">A (Tỉnh táo)</SelectItem><SelectItem value="V">V (Đáp ứng với lời nói: Không tỉnh hoàn toàn nhưng đáp ứng khi được gọi tên hoặc có người nói chuyện)</SelectItem><SelectItem value="P">P (Đáp ứng với kích thích đau: Không đáp ứng với lời nói, nhưng có phản ứng như mở mắt, cử động khi có kích thích đau)</SelectItem><SelectItem value="U">U (Hôn mê)</SelectItem></SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label className="text-[10px] font-bold">Glasgow</Label><Input type="number" className="h-8" value={formData.vitals.coma_gcs} onChange={e => updateVital('coma_gcs', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-[10px] font-bold">Thang điểm hôn mê Glasgow</Label><Input type="number" min="3" max="15" className="h-8" value={formData.vitals.coma_gcs} onChange={e => updateVital('coma_gcs', parseInt(e.target.value) || 0)} /></div>
           </div>
         </CardContent>
       </Card>
