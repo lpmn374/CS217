@@ -336,14 +336,14 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       fatigue: false,
     },
     vitals: {
-      heart_rate: undefined,
-      respiratory_rate: undefined,
+      heart_rate: 100,
+      respiratory_rate: 25,
       respiratory_distress: false,
       systolic_bp: 95,
       diastolic_bp: 65,
       pulse_pressure: 30,
       unmeasurable_bp_pulse: false,
-      capillary_refill_time: undefined,
+      capillary_refill_time: 2,
       respiratory_rate_high: false,
       cranial_nerve_palsy: false,
       stridor: false,
@@ -358,7 +358,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       squint: false,
       muscle_tone_increased: false,
       avpu_score: 'A',
-      coma_gcs: undefined,
+      coma_gcs: 15,
       startle_reflex_history: 0,
       startle_reflex_exam: false,
     },
@@ -511,10 +511,10 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
               value={formData.full_name} 
               onChange={e => setFormData({...formData, full_name: e.target.value})} 
               required 
-            />
+            /><p className="text-[10px] text-red-500 font-medium">* Bắt buộc điền.</p>
           </div>
           <div className="space-y-1">
-              <Label className="text-xs font-bold text-blue-600">Số tháng tuổi</Label>
+              <Label className="text-xs">Số tháng tuổi</Label>
               <Input 
                 type="number" 
                 min="0"
@@ -525,7 +525,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                   age_months: Math.max(0, parseInt(e.target.value) || 0) 
                 }))} 
                 required 
-              />
+              /><p className="text-[10px] text-red-500 font-medium">* Bắt buộc điền.</p>
             </div>
           <div className="grid grid-cols-2 gap-2">
             {/* Giới tính */}
@@ -709,18 +709,18 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
         <CardHeader><CardTitle className="flex items-center gap-2 text-md font-bold uppercase"><HeartPulse size={18} /> Sinh hiệu & Hô hấp</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label className="text-xs">Mạch (l/p)</Label><Input type="number" min="0" value={formData.vitals.heart_rate} onChange={e => updateVital('heart_rate', parseInt(e.target.value) || 0)} /></div>
-            <div className="space-y-1"><Label className="text-xs">Nhịp thở (l/p)</Label><Input type="number" min="0" value={formData.vitals.respiratory_rate} onChange={e => updateVital('respiratory_rate', parseInt(e.target.value) || 0)} /></div>
-            <div className="space-y-1"><Label className="text-xs">HA Tâm thu</Label><Input type="number" min="0" value={formData.vitals.systolic_bp} onChange={e => updateVital('systolic_bp', parseInt(e.target.value) || 0)} /></div>
-            <div className="space-y-1"><Label className="text-xs">HA Tâm trương</Label><Input type="number" min="0" value={formData.vitals.diastolic_bp} onChange={e => updateVital('diastolic_bp', parseInt(e.target.value) || 0)} /></div>
-            <div className="space-y-1"><Label className="text-xs">SpO2 (%)</Label><Input type="number" min="0" max="100" value={formData.vitals.spo2} onChange={e => updateVital('spo2', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-xs">Mạch (lần/phút)</Label><Input type="number" min="0" value={formData.vitals.heart_rate} onChange={e => updateVital('heart_rate', parseInt(e.target.value) || 0)} /><p className="text-[10px] text-blue-500 font-medium">Mạch (Nhịp tim) bình thường thì mặc định là 100. </p></div>
+            <div className="space-y-1"><Label className="text-xs">Nhịp thở (lần/phút)</Label><Input type="number" min="0" value={formData.vitals.respiratory_rate} onChange={e => updateVital('respiratory_rate', parseInt(e.target.value) || 0)} /><p className="text-[10px] text-blue-500 font-medium">Nhịp thở bình thường thì mặc định là 25. </p></div>
+            <div className="space-y-1"><Label className="text-xs">HA Tâm thu</Label><Input type="number" min="0" value={formData.vitals.systolic_bp} onChange={e => updateVital('systolic_bp', parseInt(e.target.value) || 0)} /><p className="text-[10px] text-blue-500 font-medium">Huyết áp bình thường thì mặc định là 95. </p></div>
+            <div className="space-y-1"><Label className="text-xs">HA Tâm trương</Label><Input type="number" min="0" value={formData.vitals.diastolic_bp} onChange={e => updateVital('diastolic_bp', parseInt(e.target.value) || 0)} /><p className="text-[10px] text-blue-500 font-medium">Huyết áp bình thường thì mặc định là  65. </p></div>
+            <div className="space-y-1"><Label className="text-xs">SpO2 (%)</Label><Input type="number" min="0" max="100" value={formData.vitals.spo2} onChange={e => updateVital('spo2', parseInt(e.target.value) || 0)} /><p className="text-[10px] text-blue-500 font-medium">Thở bình thường(không chậm, không gấp, không có dấu hiệu lạ) thì mặc định là 98{'%'}.</p></div>
             <div className="space-y-1">
-              <Label className={`text-xs font-bold ${formData.vitals.pulse_pressure <= 20 ? 'text-white bg-red-600 px-1 rounded' : 'text-red-600'}`}>Hiệu áp (PP)</Label>
+              <Label className={`text-xs font-bold ${formData.vitals.pulse_pressure <= 25 ? 'text-white bg-red-600 px-1 rounded' : 'text-red-600'}`}>Hiệu áp (PP)</Label>
               <div className={`h-9 flex items-center px-3 border rounded-md font-black transition-all ${formData.vitals.pulse_pressure <= 20 ? 'bg-red-600 text-white animate-bounce' : 'bg-red-50 text-red-700 border-red-200'}`}>
                 {formData.vitals.pulse_pressure}
               </div>
             </div>
-            <div className="space-y-1"><Label className="text-xs">Thời gian đổ đầy mao mạch (giây)</Label><Input type="number" min="0" value={formData.vitals.capillary_refill_time} onChange={e => updateVital('capillary_refill_time', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-xs">Thời gian đổ đầy mao mạch (giây)</Label><Input type="number" min="0" value={formData.vitals.capillary_refill_time} onChange={e => updateVital('capillary_refill_time', parseInt(e.target.value) || 0)} /><p className="text-[10px] text-blue-500 font-medium">Mặc định là 2 giây. </p></div>
           </div>
           <div className="bg-red-50 p-3 rounded-lg space-y-1 border border-red-100">
             <SymptomToggle label="Mạch/HA không đo được" checked={formData.vitals.unmeasurable_bp_pulse} onChange={v => updateVital('unmeasurable_bp_pulse', v)} />
@@ -767,7 +767,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                 <SelectContent><SelectItem value="A">A (Tỉnh táo)</SelectItem><SelectItem value="V">V (Đáp ứng với lời nói: Không tỉnh hoàn toàn nhưng đáp ứng khi được gọi tên hoặc có người nói chuyện)</SelectItem><SelectItem value="P">P (Đáp ứng với kích thích đau: Không đáp ứng với lời nói, nhưng có phản ứng như mở mắt, cử động khi có kích thích đau)</SelectItem><SelectItem value="U">U (Hôn mê)</SelectItem></SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label className="text-[10px] font-bold">Thang điểm hôn mê Glasgow</Label><Input type="number" min="3" max="15" className="h-8" value={formData.vitals.coma_gcs} onChange={e => updateVital('coma_gcs', parseInt(e.target.value) || 0)} /></div>
+            <div className="space-y-1"><Label className="text-[10px] font-bold">Thang điểm hôn mê Glasgow</Label><Input type="number" min="3" max="15" className="h-8" value={formData.vitals.coma_gcs} onChange={e => updateVital('coma_gcs', parseInt(e.target.value) || 0)} /><p className="text-[10px] text-blue-500 font-medium">Nếu tỉnh táo thì mặc định là 15. </p></div>
           </div>
         </CardContent>
       </Card>
