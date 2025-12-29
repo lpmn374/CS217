@@ -260,11 +260,11 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'current_grade = "Độ 4"; priority_level = "1"; oxygen_support = True; recommended_next_step.append("Suy hô hấp tuần hoàn rất nặng. Yêu cầu hồi sức cấp cứu khẩn cấp (vận mạch, thở máy, cân nhắc lọc máu). ");'),
 
 ('G3', 190, 'Grading', 
-'(heart_rate > 170 and fever == 0) or (heart_rate > (170 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (age_months < 12 and systolic_bp >= 100) or (age_months >= 12 and age_months < 24 and systolic_bp >= 110) or (age_months >= 24 and systolic_bp >= 115) or (respiratory_rate_high == 1) or (respiratory_distress == 1) or (spo2 < 94.0) or (mottled_skin == 1) or (sweating == 1)', 
+'(age_months < 12 and systolic_bp >= 100) or (age_months >= 12 and age_months < 24 and systolic_bp >= 110) or (age_months >= 24 and systolic_bp >= 115) or (respiratory_rate_high == 1) or (respiratory_distress == 1) or (spo2 < 94.0) or (mottled_skin == 1) or (sweating == 1) or (heart_rate > 170 and fever == 0) or (heart_rate > (170 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1)', 
 'current_grade = "Độ 3"; oxygen_support = True; recommended_next_step.append("Biến chứng thần kinh thực vật, suy hô hấp, tuần hoàn nặng. Theo dõi sát mạch, huyết áp. ");'),
 
 ('G2B2', 185, 'Grading', 
-'((mouth_ulcer == 1 or skin_rash == 1) and fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"])', 
+'(ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"]) or ((mouth_ulcer == 1 or skin_rash == 1) and fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1)', 
 'current_grade = "Độ 2b (Nhóm 2)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); recommended_next_step.append("Có biến chứng thần kinh nặng. Điều trị tích cực, theo dõi sát các chỉ số như mạch, huyết áp, SpO2. ");'),
 
 ('G2B1', 180, 'Grading', 
