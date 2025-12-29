@@ -792,13 +792,13 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
             <div className="space-y-1"><Label className="text-[10px] font-bold">Các chủng Enterovirus khác (A16, A6...)</Label>
               <Select value={formData.labTests.other_enterovirus_result} onValueChange={v => updateLab('other_enterovirus_result', v)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="NotDone">Chưa làm</SelectItem><SelectItem value="Positive">Positive</SelectItem><SelectItem value="Negative">Negative</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="NotDone">Chưa làm</SelectItem><SelectItem value="Positive">Dương tính (+)</SelectItem><SelectItem value="Negative">Âm tính (-)</SelectItem></SelectContent>
               </Select>
             </div>
             <div className="space-y-1"><Label className="text-[10px] font-bold">Phân lập Virus (Nuôi cấy) thuộc họ Enterovirus</Label>
               <Select value={formData.labTests.viral_isolation_result} onValueChange={v => updateLab('viral_isolation_result', v)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="NotDone">Chưa làm</SelectItem><SelectItem value="Positive">Positive</SelectItem><SelectItem value="Negative">Negative</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="NotDone">Chưa làm</SelectItem><SelectItem value="Positive">Dương tính (+)</SelectItem><SelectItem value="Negative">Âm tính (-)</SelectItem></SelectContent>
               </Select>
             </div>
             <SymptomToggle label="X-quang: Phù phổi" checked={formData.labTests.chest_xray_edema} onChange={v => updateLab('chest_xray_edema', v)} />
