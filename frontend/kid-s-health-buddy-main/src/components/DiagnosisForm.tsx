@@ -631,7 +631,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                 <Label className="text-xs font-bold">Diễn tiến bệnh</Label>
                 <Select value={formData.symptoms.symptom_progression_speed} onValueChange={v => updateSymptom('symptom_progression_speed', v)}>
                    <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
-                   <SelectContent><SelectItem value="Normal">Bình thường</SelectItem><SelectItem value="Very Fast">Rất nhanh (Diễn tiến nặng trong vòng 24 - 48 giờ).</SelectItem></SelectContent>
+                   <SelectContent><SelectItem value="Normal">Bình thường</SelectItem><SelectItem value="Very Fast">Rất nhanh (Diễn tiến cực nhanh/nặng trong vòng 24 - 48 giờ).</SelectItem></SelectContent>
                 </Select>
             </div>
           </div>
