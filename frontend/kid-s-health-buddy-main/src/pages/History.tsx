@@ -345,29 +345,55 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  Search, 
-  Trash2, 
-  Calendar, 
-  User, 
-  FileX,
-  ArrowLeft,
-  Loader2,
-  AlertCircle
+  Search, Trash2, Calendar, User, FileX, ArrowLeft, 
+  Loader2, AlertCircle, Eye, Activity, Stethoscope, Beaker
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Khai báo Interface khớp với Query JOIN từ Flask (đã sửa ở bước trước)
+// 1. Interface khớp hoàn toàn với JOIN SQL từ Backend
 interface HistoryRecord {
   id: number;
   name: string;
   age_months: number;
+  gender: string;
+  has_comorbidities: boolean;
+  comorbidities_detail?: string;
+  epidemiology_contact: boolean;
   date: string;
+
+  // Triệu chứng (ClinicalAssessment)
+  fever: boolean;
+  fever_temp?: number;
+  fever_duration_days?: number;
+  fever_refractory: boolean;
+  mouth_ulcer: boolean;
+  skin_rash: boolean;
+  vomiting: boolean;
+  lethargy: boolean;
+  irritable_crying: boolean;
+
+  // Chỉ số sinh tồn (VitalSignsNeuro)
+  heart_rate?: number;
+  respiratory_rate?: number;
+  systolic_bp?: number;
+  diastolic_bp?: number;
+  spo2?: number;
+  startle_reflex_history: number;
+  ataxia: boolean;
+  limb_weakness: boolean;
+
+  // Xét nghiệm (LabTests)
+  ev71_result?: string;
+
+  // Kết quả (DiagnosticOutput)
   grade: string;
   diagnosis: string;
   treatment: string;
-  complication?: string; // Thêm trường biến chứng
+  complication?: string;
+  priority_level?: string;
 }
 
 const GRADE_LABELS: Record<string, { label: string; className: string }> = {
@@ -385,34 +411,29 @@ export default function History() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [gradeFilter, setGradeFilter] = useState<string>('all');
+  
+  const [selectedRecord, setSelectedRecord] = useState<HistoryRecord | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  
   const { toast } = useToast();
-
   const API_BASE = 'http://localhost:5000';
 
-  // 1. Tải dữ liệu từ Backend
   const loadHistory = async () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/history`);
-      if (!response.ok) throw new Error("Không thể tải dữ liệu");
+      if (!response.ok) throw new Error("Lỗi tải dữ liệu");
       const data = await response.json();
       setHistory(data);
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Lỗi kết nối",
-        description: "Không thể tải danh sách bệnh nhân từ máy chủ."
-      });
+      toast({ variant: "destructive", title: "Lỗi kết nối", description: "Không thể tải danh sách hồ sơ." });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
+  useEffect(() => { loadHistory(); }, []);
 
-  // 2. Logic tìm kiếm và lọc (Chuẩn hóa chuỗi để lọc chính xác)
   const filteredHistory = useMemo(() => {
     return history.filter(record => {
       const nameMatch = record.name?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -421,67 +442,49 @@ export default function History() {
     });
   }, [history, searchQuery, gradeFilter]);
 
-  // 3. Logic xóa ca bệnh (Đồng bộ URL với app.py)
-  const handleDelete = async (id: number) => {
-    if (!confirm("Hành động này sẽ xóa vĩnh viễn dữ liệu bệnh nhân và các kết quả xét nghiệm liên quan. Bạn chắc chắn chứ?")) return;
-
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    if (!confirm("Xóa vĩnh viễn hồ sơ này khỏi hệ thống?")) return;
     try {
-      const response = await fetch(`${API_BASE}/delete_patient/${id}`, {
-        method: 'DELETE'
-      });
-      
+      const response = await fetch(`${API_BASE}/delete_patient/${id}`, { method: 'DELETE' });
       if (response.ok) {
         setHistory(prev => prev.filter(item => item.id !== id));
-        toast({
-          title: 'Thành công',
-          description: 'Đã xóa hồ sơ bệnh nhân khỏi hệ thống.',
-        });
-      } else {
-        throw new Error();
+        toast({ title: 'Thành công', description: 'Đã xóa hồ sơ bệnh nhi.' });
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Lỗi xóa dữ liệu",
-        description: "Không thể xóa ca bệnh này. Vui lòng thử lại sau."
-      });
+      toast({ variant: "destructive", title: "Lỗi", description: "Không thể thực hiện lệnh xóa." });
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50/50">
       <Header />
-
       <main className="container py-8 max-w-5xl">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">Lịch sử chẩn đoán</h1>
-            <p className="text-muted-foreground mt-1">
-              Hệ thống lưu trữ {history.length} hồ sơ bệnh nhi TCM
-            </p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase">Lịch sử hệ thống</h1>
+            <p className="text-muted-foreground mt-1">Dữ liệu tổng hợp từ các ca khám lâm sàng</p>
           </div>
           <Link to="/">
-            <Button variant="outline" className="shadow-sm">
-              <ArrowLeft className="h-4 w-4 mr-2" /> Quay lại khám bệnh
+            <Button variant="outline" className="shadow-sm border-primary/20 text-primary hover:bg-primary/5">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Khám mới
             </Button>
           </Link>
         </div>
 
-        {/* Thanh công cụ tìm kiếm & Lọc */}
+        {/* Bộ lọc */}
         <div className="bg-white p-4 rounded-xl shadow-sm border mb-6 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Tìm tên bệnh nhân..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 border-slate-200"
+            <Input 
+              placeholder="Tìm tên bệnh nhi..." 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              className="pl-10 focus-visible:ring-primary"
             />
           </div>
           <Select value={gradeFilter} onValueChange={setGradeFilter}>
-            <SelectTrigger className="w-full sm:w-56 border-slate-200">
-              <SelectValue placeholder="Lọc theo phân độ" />
-            </SelectTrigger>
+            <SelectTrigger className="w-full sm:w-56"><SelectValue placeholder="Lọc theo phân độ" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả phân độ</SelectItem>
               <SelectItem value="Độ 1">Độ 1</SelectItem>
@@ -492,82 +495,41 @@ export default function History() {
           </Select>
         </div>
 
-        {/* Hiển thị danh sách */}
+        {/* Danh sách */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <p className="text-slate-500 font-medium">Đang tải dữ liệu...</p>
-          </div>
+          <div className="text-center py-20"><Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" /></div>
         ) : filteredHistory.length === 0 ? (
-          <Card className="border-dashed border-2 bg-transparent">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <FileX className="h-16 w-16 text-slate-300 mb-4" />
-              <h3 className="text-xl font-bold text-slate-400">Không tìm thấy kết quả</h3>
-              <p className="text-slate-400 mt-1 text-center max-w-xs">
-                Thử thay đổi từ khóa tìm kiếm hoặc lọc theo phân độ khác.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="text-center py-20 border-2 border-dashed rounded-2xl text-slate-400"><FileX className="h-12 w-12 mx-auto mb-2" /> Không tìm thấy hồ sơ nào</div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {filteredHistory.map((record) => {
               const gradeConfig = GRADE_LABELS[record.grade] || GRADE_LABELS['N/A'];
-
               return (
-                <Card key={record.id} className="group hover:border-primary/50 transition-all overflow-hidden shadow-sm">
-                  <CardContent className="p-0">
-                    <div className="flex items-stretch">
-                      {/* Cột màu sắc bên trái dựa trên độ nặng */}
-                      <div className={cn("w-2", gradeConfig.className.split(' ')[0])} />
-                      
-                      <div className="flex-1 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                            <User className="h-6 w-6 text-slate-400 group-hover:text-primary" />
+                <Card 
+                  key={record.id} 
+                  className="group hover:border-primary/40 transition-all cursor-pointer shadow-sm overflow-hidden"
+                  onClick={() => { setSelectedRecord(record); setIsDetailsOpen(true); }}
+                >
+                  <CardContent className="p-0 flex items-stretch">
+                    <div className={cn("w-1.5", gradeConfig.className.split(' ')[0])} />
+                    <div className="flex-1 p-4 flex items-center justify-between">
+                      <div className="flex gap-4 items-center">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10">
+                          <User className="h-5 w-5 text-slate-400 group-hover:text-primary" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-slate-800">{record.name}</h3>
+                            <Badge className={cn("text-[9px] px-1.5 py-0 shadow-none uppercase font-bold", gradeConfig.className)}>{gradeConfig.label}</Badge>
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-extrabold text-lg text-slate-800">{record.name}</h3>
-                              <Badge className={cn("font-bold shadow-none", gradeConfig.className)}>
-                                {gradeConfig.label}
-                              </Badge>
-                            </div>
-                            
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500 mt-1">
-                              <span className="font-medium">{record.age_months} tháng tuổi</span>
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5" /> 
-                                {new Date(record.date).toLocaleDateString('vi-VN')}
-                              </span>
-                            </div>
-
-                            <div className="mt-3 flex flex-col gap-1">
-                              <p className="text-sm font-bold text-primary flex items-center gap-2">
-                                <AlertCircle className="h-3.5 w-3.5" />
-                                {record.diagnosis}
-                              </p>
-                              {record.complication && (
-                                <p className="text-xs font-semibold text-destructive px-2 py-0.5 bg-destructive/5 rounded border border-destructive/10 inline-block w-fit">
-                                  Biến chứng: {record.complication}
-                                </p>
-                              )}
-                              <p className="text-xs text-slate-500 italic line-clamp-1 mt-1">
-                                Xử trí: {record.treatment}
-                              </p>
-                            </div>
+                          <div className="text-[11px] text-slate-500 flex gap-3 mt-0.5">
+                            <span>{record.age_months} tháng</span>
+                            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(record.date).toLocaleDateString('vi-VN')}</span>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                           <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-slate-400 hover:text-destructive hover:bg-destructive/5"
-                            onClick={() => handleDelete(record.id)}
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </Button>
-                        </div>
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={(e) => handleDelete(e, record.id)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
                   </CardContent>
@@ -576,6 +538,92 @@ export default function History() {
             })}
           </div>
         )}
+
+        {/* MODAL CHI TIẾT */}
+        <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+          <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0 gap-0 border-none shadow-2xl">
+            <DialogHeader className="p-6 bg-slate-900 text-white rounded-t-lg">
+              <DialogTitle className="text-xl font-black flex items-center gap-3">
+                <User className="h-6 w-6 text-primary-foreground/50" />
+                HỒ SƠ: {selectedRecord?.name?.toUpperCase()}
+              </DialogTitle>
+            </DialogHeader>
+
+            {selectedRecord && (
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* CỘT 1: HÀNH CHÍNH */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-tighter flex items-center gap-2"><AlertCircle className="h-3 w-3" /> Hành chính</h4>
+                    <div className="bg-slate-50 p-4 rounded-xl border space-y-2 text-sm">
+                      <p><strong>Giới tính:</strong> {selectedRecord.gender}</p>
+                      <p><strong>Tuổi:</strong> {selectedRecord.age_months} tháng</p>
+                      <p><strong>Tiền sử:</strong> {selectedRecord.has_comorbidities ? `Có (${selectedRecord.comorbidities_detail})` : "Khỏe mạnh"}</p>
+                      <p><strong>Dịch tễ:</strong> {selectedRecord.epidemiology_contact ? "Có tiếp xúc nguồn lây" : "Không rõ"}</p>
+                    </div>
+                  </div>
+
+                  {/* CỘT 2: SINH HIỆU */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-tighter flex items-center gap-2"><Activity className="h-3 w-3" /> Sinh hiệu & Thần kinh</h4>
+                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
+                      <div><p className="text-[10px] text-blue-500 font-bold uppercase">Mạch</p><p className="font-bold">{selectedRecord.heart_rate || '--'} l/p</p></div>
+                      <div><p className="text-[10px] text-blue-500 font-bold uppercase">Nhiệt độ</p><p className="font-bold">{selectedRecord.fever_temp || '--'} °C</p></div>
+                      <div><p className="text-[10px] text-blue-500 font-bold uppercase">Huyết áp</p><p className="font-bold">{selectedRecord.systolic_bp}/{selectedRecord.diastolic_bp} mmHg</p></div>
+                      <div><p className="text-[10px] text-blue-500 font-bold uppercase">SpO2</p><p className="font-bold">{selectedRecord.spo2 || '--'} %</p></div>
+                    </div>
+                  </div>
+
+                  {/* CỘT 3: XÉT NGHIỆM */}
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-tighter flex items-center gap-2"><Beaker className="h-3 w-3" /> Xét nghiệm</h4>
+                    <div className="bg-purple-50/50 p-4 rounded-xl border border-purple-100 text-sm">
+                       <p className="font-medium text-purple-800">EV71: <span className="font-bold uppercase">{selectedRecord.ev71_result || "Chưa làm"}</span></p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* DÒNG 2: TRIỆU CHỨNG & CHẨN ĐOÁN */}
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-tighter flex items-center gap-2"><Stethoscope className="h-3 w-3" /> Lâm sàng & Kết luận</h4>
+                  <div className="border rounded-2xl p-6 bg-white shadow-sm">
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {selectedRecord.fever && <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">Sốt {selectedRecord.fever_duration_days} ngày</Badge>}
+                      {selectedRecord.fever_refractory && <Badge variant="destructive">Sốt khó hạ</Badge>}
+                      {selectedRecord.mouth_ulcer && <Badge variant="secondary">Loét miệng</Badge>}
+                      {selectedRecord.skin_rash && <Badge variant="secondary">Phát ban</Badge>}
+                      {selectedRecord.vomiting && <Badge variant="secondary">Nôn ói</Badge>}
+                      {selectedRecord.startle_reflex_history > 0 && <Badge variant="destructive">Giật mình {selectedRecord.startle_reflex_history} lần</Badge>}
+                      {selectedRecord.ataxia && <Badge variant="destructive">Thất điều/Run chi</Badge>}
+                      {selectedRecord.limb_weakness && <Badge variant="destructive">Yếu liệt chi</Badge>}
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6 pt-6 border-t">
+                      <div className="space-y-2">
+                        <p className="text-sm"><strong>Chẩn đoán:</strong> <span className="text-primary font-bold">{selectedRecord.diagnosis}</span></p>
+                        <p className="text-sm flex items-center gap-2">
+                          <strong>Phân độ:</strong> 
+                          <Badge className={cn("shadow-none", (GRADE_LABELS[selectedRecord.grade] || GRADE_LABELS['N/A']).className)}>
+                            {selectedRecord.grade}
+                          </Badge>
+                        </p>
+                        <p className="text-sm"><strong>Biến chứng:</strong> <span className="text-red-600 font-bold">{selectedRecord.complication || "Không có"}</span></p>
+                      </div>
+                      <div className="bg-slate-900 text-white p-4 rounded-xl">
+                        <p className="text-[10px] uppercase font-black text-primary mb-1">Xử trí / Hướng dẫn tiếp theo</p>
+                        <p className="text-sm leading-relaxed">{selectedRecord.treatment}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="p-4 border-t flex justify-end bg-slate-50">
+              <Button onClick={() => setIsDetailsOpen(false)} className="rounded-lg px-8">Đóng hồ sơ</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

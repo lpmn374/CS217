@@ -826,18 +826,49 @@ def get_history():
         return jsonify({"error": "DB Error"}), 500
     try:
         with conn.cursor() as cursor:
+            # SQL lấy toàn bộ các trường khớp với Interface Frontend
             sql = """
-                SELECT p.patient_id as id, p.full_name as name, 
-                       p.created_at as date, p.age_months, 
-                       o.current_grade as grade, o.diagnosis_status as diagnosis,
-                       o.treatment_location as treatment, 
-                       o.complication_type as complication
+                SELECT 
+                    -- Nhóm Hành chính
+                    p.patient_id as id, p.full_name as name, p.age_months, p.gender, 
+                    p.has_comorbidities, p.comorbidities_detail, p.epidemiology_contact, p.created_at as date,
+                    
+                    -- Nhóm Symptoms (Khớp interface Symptoms)
+                    ca.fever, ca.fever_temp, ca.fever_duration_days, ca.fever_refractory,
+                    ca.mouth_ulcer, ca.ulcer_characteristics, ca.history_ulcer_recurrence,
+                    ca.skin_rash, ca.skin_rash_location, ca.rash_type, ca.rash_itchiness, 
+                    ca.rash_stages, ca.skin_rash_pain, ca.post_auricular_lymph_nodes,
+                    ca.mucosal_bleeding, ca.vomiting, ca.lethargy, ca.sleep_disturbance, 
+                    ca.irritable_crying, ca.poor_feeding, ca.sore_throat, ca.fatigue, 
+                    ca.symptom_progression_speed,
+
+                    -- Nhóm Vitals & Neuro (Khớp interface Vitals)
+                    v.heart_rate, v.respiratory_rate, v.systolic_bp, v.diastolic_bp,
+                    v.pulse_pressure, v.unmeasurable_bp_pulse, v.capillary_refill_time,
+                    v.respiratory_rate_high, v.spo2, v.coma_gcs, v.avpu_score,
+                    v.startle_reflex_history, v.startle_reflex_exam, v.ataxia, v.nystagmus, 
+                    v.squint, v.limb_weakness, v.muscle_tone_increased, v.cranial_nerve_palsy,
+                    v.respiratory_distress, v.apnea_gasping, v.cyanosis, v.mottled_skin, v.sweating,
+
+                    -- Nhóm LabTests
+                    l.ev71_result, l.other_enterovirus_result, l.viral_isolation_result, l.chest_xray_edema,
+
+                    -- Nhóm Kết quả (DiagnosticOutput)
+                    o.current_grade as grade, o.diagnosis_status as diagnosis,
+                    o.clinical_form, o.priority_level, o.complication_type as complication,
+                    o.treatment_location, o.recommended_next_step as treatment, o.lab_orders
                 FROM Patient p
                 JOIN DiagnosticOutput o ON p.patient_id = o.patient_id
+                LEFT JOIN ClinicalAssessment ca ON p.patient_id = ca.patient_id
+                LEFT JOIN VitalSignsNeuro v ON p.patient_id = v.patient_id
+                LEFT JOIN LabTests l ON p.patient_id = l.patient_id
                 ORDER BY p.created_at DESC
             """
             cursor.execute(sql)
-            return jsonify(cursor.fetchall())
+            results = cursor.fetchall()
+            return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
 

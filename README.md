@@ -16,8 +16,11 @@
 </div>
 
 ## 🚀 TÍNH NĂNG NỔI BẬT
-* **Chẩn đoán tự động:** Phân độ từ **Độ 1 đến Độ 4** dựa trên Mạch và SpO2.
-* **Lưu trữ đa tầng:** Quản lý dữ liệu qua **4 bảng liên kết**.
+* **Cảnh báo biến chứng:** Cảnh báo các biến chứng về thần kinh, tim mạch và hô hấp.
+* **Kiểm tra phân biệt:** Phân biệt với một số bệnh như Ap-tơ, Thủy đậu, Sốt phát ban, Dị ứng da, Sốt xuất huyết, Nhiễm khuẩn máu, Viêm da mủ bằng một số dấu hiệu đặc trưng về dạng ban, tiền sử tái phát, vị trí ban,...
+* **Phân loại ca TCM:** Phân loại Ca nghi ngờ/ Ca lâm sàng (Thể điển hình - cấp tính, Thể không điển hình - Chỉ loét miệng/Thể không điển - Thể kín, Thể tối cấp)/ Ca xác định(Có thể có hoặc không thuộc Tối cấp).
+* **Chẩn đoán tự động:** Phân độ từ **Độ 1 đến Độ 4** dựa trên các triệu chứng về da, miệng, thần kinh, tim mạch, hô hấp, tiêu hóa,...
+* **Lưu trữ đa tầng:** Quản lý dữ liệu qua **7 bảng liên kết**.
 * **Xóa thông minh:** Sử dụng cơ chế **`ON DELETE CASCADE`** để bảo mật dữ liệu.
 
 
@@ -71,11 +74,15 @@
 
 Dữ liệu được quản lý chặt chẽ thông qua các bảng liên kết:
 
-* **`tb_patient_info`**: Thông tin hành chính bệnh nhi.
-* **`tb_vital_signs_neuro`**: Các chỉ số sinh hiệu và thần kinh.
-* **`tb_grading_result`**: Kết quả phân độ chẩn đoán.
-* **`tb_treatment_plan`**: Kế hoạch và địa điểm điều trị.
+* **`Patient`**: Thông tin hành chính bệnh nhi.
+* **`ClinicalAssessment`**: Triệu chứng lâm sàng.
+* **`VitalSignsNeuro`**: Dấu hiệu sinh tồn & Thần kinh.
+* **`HFMDGrading`**: Phân độ và biến chứng.
+* **`TreatmentPlan`**: Kế hoạch điều trị.
+* **`DiagnosticOutput`**: Kết quả tổng hợp.
 
+Và 1 bảng luật:
+* **`rule_base`**
 ---
 
 ## 📂 **CÁC FILE QUAN TRỌNG (DÀNH CHO CHỈNH SỬA)**
@@ -93,9 +100,12 @@ Nếu bạn muốn tùy chỉnh lại hệ thống, hãy chú ý đến các fil
 * **`src/components/`**: Thư mục chứa các thành phần giao diện nhỏ như Form nhập liệu, các nút bấm và Badge hiển thị Độ.
 
 ### 🗃️ **3. Dữ liệu (SQL)**
-* **`database.sql`**: File chứa cấu trúc của 4 bảng liên kết. Nếu bạn thay đổi số lượng cột trong bảng, hãy cập nhật lại file này.
+* **`database.sql`**: File chứa cấu trúc của 7 bảng thông tin và 1 bảng luật. Nếu bạn thay đổi số lượng cột trong bảng, hãy cập nhật lại file này.
 
 ---
 <div align="center">
   <b>Phát triển bởi Võ Minh Ngọc • © 2025</b>
+</div>
+<div> 
+    <b>Cập nhật, chỉnh sửa bởi Lê Phạm Mỹ Ngọc và Nguyễn Phan Phương Ngân • © 2025</b>
 </div>

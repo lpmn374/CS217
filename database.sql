@@ -182,31 +182,31 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- =====================================================
 ('R2.2.1', 907, 'Differential', 
 'mouth_ulcer == 1 and skin_rash == 0 and ulcer_characteristics == "Atypical" and history_ulcer_recurrence == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Ap-tơ"; stop_program = True;'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Ap-tơ"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Ap-tơ. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ". );'),
 
 ('R2.2.2', 906, 'Differential', 
 'skin_rash == 1 and rash_type == "Phỏng nước điển hình" and skin_rash_location == "Toàn thân" and rash_stages == "Nhiều độ tuổi" and rash_itchiness == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Thủy đậu"; stop_program = True;'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Thủy đậu"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Thủy đậu. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ ". );'),
 
 ('R2.2.3', 905, 'Differential', 
 'skin_rash == 1 and (rash_type == "Chấm xuất huyết" or rash_type == "Bầm máu") and fever_temp >= 39.0 and mucosal_bleeding == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt xuất huyết"; stop_program = True;'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt xuất huyết"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Sốt xuất huyết. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.4', 904, 'Differential', 
 'skin_rash == 1 and rash_type == "Hoại tử trung tâm" and fever_temp >= 39.0 and symptom_progression_speed == "Very Fast" and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Nhiễm khuẩn huyết do não mô cầu"; stop_program = True;'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Nhiễm khuẩn huyết do não mô cầu"; stop_program = True; ecommended_next_step.append("Trẻ nghi ngờ mắc Nhiễm khuẩn huyết do Não mô cầu. Cần nhanh đưa trẻ đến cơ sở y tế để kiểm tra, cấp cứu và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.5', 903, 'Differential', 
 'skin_rash == 1 and rash_type == "Mụn mủ" and skin_rash_pain == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Viêm da mủ"; stop_program = True;'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Viêm da mủ"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Viêm da mủ. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.6', 902, 'Differential', 
 'skin_rash == 1 and rash_type == "Hồng ban và sần" and post_auricular_lymph_nodes == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt phát ban"; stop_program = True;'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt phát ban"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Sốt phát ban. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.7', 901, 'Differential', 
 'skin_rash == 1 and rash_type == "Hồng ban đa dạng" and rash_itchiness == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Dị ứng da"; stop_program = True;'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Dị ứng da"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Dị ứng da. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 -- =====================================================
 -- BƯỚC 3: PHÂN LOẠI CA BỆNH (4-7) (Priority: 800-500)
@@ -214,7 +214,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- BƯỚC 4: Ca lâm sàng điển hình
 ('R_STEP4', 800, 'Diagnosis', 
 '(mouth_ulcer == 1 and ulcer_characteristics == "Typical" and history_ulcer_recurrence == 0) or (skin_rash == 1 and rash_type == "Phỏng nước điển hình" and (skin_rash_location == "Lòng bàn tay, chân, gối, khuỷu, mông" or epidemiology_contact == 1 or rash_stages == "Đồng đều"))', 
-'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Cấp tính"; priority_level = "2";'),
+'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Cấp tính"; priority_level = "2"; recommended_next_step.append("Theo dõi sát các dấu hiệu chuyển độ và làm xét nghiệm vi rút để khẳng định.");'),
 
 -- BƯỚC 5: Ca lâm sàng không điển hình (chỉ loét miệng)
 ('R_STEP5', 700, 'Diagnosis', 
@@ -229,14 +229,14 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- BƯỚC 7: Ca nghi ngờ
 ('R_STEP7', 500, 'Diagnosis', 
 'diagnosis_status == None and (fever == 1 and (poor_feeding == 1 or sore_throat == 1) and epidemiology_contact == 1 and mouth_ulcer == 0 and skin_rash == 0)', 
-'diagnosis_status = "Ca nghi ngờ TCM"; priority_level = "3";'),
+'diagnosis_status = "Ca nghi ngờ TCM"; priority_level = "3"; recommended_next_step.append("Theo dõi sát dấu hiệu loét miệng/phát ban trong 24 - 48h tới". );'),
 
 -- =====================================================
 -- BƯỚC 4: GHI ĐÈ THỂ TỐI CẤP (8) (Priority: 400 -> 850)
 -- =====================================================
 ('R_STEP8', 850, 'Diagnosis', 
 'diagnosis_status == "Ca lâm sàng TCM" and symptom_progression_speed == "Very Fast"', 
-'clinical_form = "Tối cấp"; priority_level = "1";'),
+'clinical_form = "Tối cấp"; priority_level = "1"; recommended_next_step.append("Thể tối cấp - Nguy cơ tử vong rất cao, hồi sức cấp cứu khẩn cấp. ");'),
 
 -- =====================================================
 -- BƯỚC 5: GHI ĐÈ CA XÁC ĐỊNH (9) (Priority: 300 -> 890)
@@ -250,27 +250,27 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- =====================================================
 ('G4', 200, 'Grading', 
 '(apnea_gasping == 1) or (cyanosis == 1 or spo2 < 92.0) or (chest_xray_edema == 1) or (unmeasurable_bp_pulse == 1) or (age_months < 12 and systolic_bp > 0 and systolic_bp < 70) or (age_months >= 12 and systolic_bp > 0 and systolic_bp < 80) or (pulse_pressure <= 25)', 
-'current_grade = "Độ 4"; priority_level = "1"; oxygen_support = True;'),
+'current_grade = "Độ 4"; priority_level = "1"; oxygen_support = True; recommended_next_step.append("Suy hô hấp tuần hoàn rất nặng. Yêu cầu hồi sức cấp cứu khẩn cấp (vận mạch, thở máy, cân nhắc lọc máu). ");'),
 
 ('G3', 190, 'Grading', 
 '(heart_rate > 170 and fever == 0) or (heart_rate > (170 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (age_months < 12 and systolic_bp >= 100) or (age_months >= 12 and age_months < 24 and systolic_bp >= 110) or (age_months >= 24 and systolic_bp >= 115) or (respiratory_rate_high == 1) or (respiratory_distress == 1) or (spo2 < 94.0) or (mottled_skin == 1) or (sweating == 1)', 
-'current_grade = "Độ 3"; oxygen_support = True;'),
+'current_grade = "Độ 3"; oxygen_support = True; recommended_next_step.append("Biến chứng thần kinh thực vật, suy hô hấp, tuần hoàn nặng. Theo dõi sát mạch, huyết áp.");'),
 
 ('G2B2', 185, 'Grading', 
 '((mouth_ulcer == 1 or skin_rash == 1) and fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"])', 
-'current_grade = "Độ 2b (Nhóm 2)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh");'),
+'current_grade = "Độ 2b (Nhóm 2)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); recommended_next_step.append("Có biến chứng thần kinh nặng. Điều trị tích cực, theo dõi sát các chỉ số như mạch, huyết áp, SpO2.");'),
 
 ('G2B1', 180, 'Grading', 
-'(startle_reflex_exam == 1) or (startle_reflex_history >= 2) or (startle_reflex_history >= 1 and lethargy == 1) or (startle_reflex_history >= 1 and heart_rate > 130 and fever == 0) or (startle_reflex_history >= 1 and heart_rate > (130 + max(0, fever_temp - 38) * 10) and fever == 1)', 
-'current_grade = "Độ 2b (Nhóm 1)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh");'),
+'(startle_reflex_exam == 1) or (startle_reflex_history >= 2) or (startle_reflex_history >= 1 and lethargy == 1) or (startle_reflex_history >= 1 and heart_rate > 130 and fever == 0) or (startle_reflex_history >= 1 and heart_rate > (130 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1)', 
+'current_grade = "Độ 2b (Nhóm 1)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); recommended_next_step.append("Có dấu hiệu biến chứng thần kinh giai đoạn sớm. Theo dõi mạch, nhiệt độ, huyết áp, nhịp thở, kiểu thở, tri giác, ran phổi, SpO2 (tất cả trẻ có mạch nhanh hoặc mạch chậm phải đo huyết áp) mỗi 1-3 giờ trong 6 giờ đầu, sau đó theo chu kỳ 4 - 6 giờ. ");'),
 
 ('G2A', 170, 'Grading', 
 '(startle_reflex_history > 0 and startle_reflex_history < 2 and startle_reflex_exam == 0) or (fever_duration_days > 2) or (fever_temp >= 39.0 and (vomiting == 1 or lethargy == 1 or sleep_disturbance == 1 or irritable_crying == 1))', 
-'current_grade = "Độ 2a";'),
+'current_grade = "Độ 2a"; recommended_next_step.append("Biến chứng thần kinh nhẹ, cần theo dõi sát: Đảm bảo dinh dưỡng, nghỉ ngơi và vệ sinh cho trẻ. Theo dõi sinh hiệu: mạch, nhiệt độ, nhịp thở, tri giác, SpO2 mỗi 6-12 giờ. Cần tái khám nếu có thêm triệu chứng hoặc triệu chứng chuyển xấu. ");'),
 
 ('G1', 160, 'Grading', 
 'current_grade == None and diagnosis_status != None and (mouth_ulcer == 1 or skin_rash == 1)', 
-'current_grade = "Độ 1";'),
+'current_grade = "Độ 1"; recommended_next_step.append(“Đảm bảo dinh dưỡng, nghỉ ngơi và vệ sinh cho trẻ. Tái khám mỗi 1 - 2 ngày trong 7-10 ngày đầu của bệnh. Trẻ có sốt phải tái khám mỗi ngày cho đến khi hết sốt ít nhất 48 giờ. Cần tái khám nếu có thêm triệu chứng hoặc triệu chứng chuyển xấu. ”);'),
 
 -- =====================================================
 -- BƯỚC 7: CHỈ ĐỊNH CẬN LÂM SÀNG (Priority: 100-80)
