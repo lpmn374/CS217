@@ -239,6 +239,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pymysql
 import re
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -826,55 +827,90 @@ def diagnose():
 @app.route('/history', methods=['GET'])
 def get_history():
     conn = connect_db()
-    if not conn: 
+    if not conn:
         return jsonify({"error": "DB Error"}), 500
     try:
         with conn.cursor() as cursor:
-            # SQL lấy toàn bộ các trường khớp với Interface Frontend
             sql = """
                 SELECT 
-                    -- Nhóm Hành chính
-                    p.patient_id as id, p.full_name as name, p.age_months, p.gender, 
-                    p.has_comorbidities, p.comorbidities_detail, p.epidemiology_contact, p.created_at as date,
-                    
-                    -- Nhóm Symptoms (Khớp interface Symptoms)
-                    ca.fever, ca.fever_temp, ca.fever_duration_days, ca.fever_refractory,
-                    ca.mouth_ulcer, ca.ulcer_characteristics, ca.history_ulcer_recurrence,
-                    ca.skin_rash, ca.skin_rash_location, ca.rash_type, ca.rash_itchiness, 
-                    ca.rash_stages, ca.skin_rash_pain, ca.post_auricular_lymph_nodes,
-                    ca.mucosal_bleeding, ca.vomiting, ca.lethargy, ca.sleep_disturbance, 
-                    ca.irritable_crying, ca.poor_feeding, ca.sore_throat, ca.fatigue, 
-                    ca.symptom_progression_speed,
-
-                    -- Nhóm Vitals & Neuro (Khớp interface Vitals)
-                    v.heart_rate, v.respiratory_rate, v.systolic_bp, v.diastolic_bp,
-                    v.pulse_pressure, v.unmeasurable_bp_pulse, v.capillary_refill_time,
-                    v.respiratory_rate_high, v.spo2, v.coma_gcs, v.avpu_score,
-                    v.startle_reflex_history, v.startle_reflex_exam, v.ataxia, v.nystagmus, 
-                    v.squint, v.limb_weakness, v.muscle_tone_increased, v.cranial_nerve_palsy,
-                    v.respiratory_distress, v.apnea_gasping, v.cyanosis, v.mottled_skin, v.sweating,
-
-                    -- Nhóm LabTests
-                    l.ev71_result, l.other_enterovirus_result, l.viral_isolation_result, l.chest_xray_edema,
-
-                    -- Nhóm Kết quả (DiagnosticOutput)
-                    o.current_grade as grade, o.diagnosis_status as diagnosis,
-                    o.clinical_form, o.priority_level, o.complication_type as complication,
-                    o.treatment_location, o.recommended_next_step as treatment, o.lab_orders
+                    p.patient_id as id,
+                    p.full_name as name,
+                    p.age_months,
+                    p.gender,
+                    p.created_at as date,
+                    o.current_grade as grade,
+                    o.diagnosis_status as diagnosis
                 FROM Patient p
-                JOIN DiagnosticOutput o ON p.patient_id = o.patient_id
-                LEFT JOIN ClinicalAssessment ca ON p.patient_id = ca.patient_id
-                LEFT JOIN VitalSignsNeuro v ON p.patient_id = v.patient_id
-                LEFT JOIN LabTests l ON p.patient_id = l.patient_id
+                LEFT JOIN DiagnosticOutput o ON p.patient_id = o.patient_id
                 ORDER BY p.created_at DESC
             """
             cursor.execute(sql)
             results = cursor.fetchall()
+
+            for r in results:
+                if r.get("date"):
+                    r["date"] = r["date"].isoformat()
+
             return jsonify(results)
     except Exception as e:
+        print("🔥 HISTORY ERROR:", e)
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
+
+@app.route('/history/<int:patient_id>', methods=['GET'])
+def get_history_detail(patient_id):
+    """
+    Endpoint mới: Lấy TOÀN BỘ thông tin chi tiết của 1 bệnh nhân
+    """
+    conn = connect_db()
+    if not conn:
+        return jsonify({"error": "DB Error"}), 500
+    
+    try:
+        with conn.cursor() as cursor:
+            # 1. Thông tin hành chính
+            cursor.execute("SELECT * FROM Patient WHERE patient_id = %s", (patient_id,))
+            patient = cursor.fetchone()
+            
+            if not patient:
+                return jsonify({"error": "Không tìm thấy bệnh nhân"}), 404
+            
+            # 2. Lâm sàng
+            cursor.execute("SELECT * FROM ClinicalAssessment WHERE patient_id = %s", (patient_id,))
+            clinical = cursor.fetchone()
+            
+            # 3. Sinh hiệu & thần kinh
+            cursor.execute("SELECT * FROM VitalSignsNeuro WHERE patient_id = %s", (patient_id,))
+            vitals = cursor.fetchone()
+            
+            # 4. Xét nghiệm
+            cursor.execute("SELECT * FROM LabTests WHERE patient_id = %s", (patient_id,))
+            lab = cursor.fetchone()
+            
+            # 5. Kết quả chẩn đoán
+            cursor.execute("SELECT * FROM DiagnosticOutput WHERE patient_id = %s", (patient_id,))
+            output = cursor.fetchone()
+            
+            # 6. Format lại datetime
+            if patient.get('created_at'):
+                patient['created_at'] = patient['created_at'].isoformat()
+            
+            # 7. Trả về dữ liệu đầy đủ
+            return jsonify({
+                "patient": patient,
+                "clinical": clinical or {},
+                "vitals": vitals or {},
+                "lab": lab or {},
+                "result": output or {}
+            })
+            
+    except Exception as e:
+        print(f"🔥 ERROR get_history_detail: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
 
 @app.route('/delete_patient/<int:patient_id>', methods=['DELETE'])
 def delete_patient(patient_id):
