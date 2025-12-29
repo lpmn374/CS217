@@ -568,6 +568,15 @@ def diagnose():
         try: return float(val)
         except: return None
 
+    # Trong hàm diagnose, trước khi tạo ctx
+    avpu_raw = v.get('avpu_score', 'A')
+    if isinstance(avpu_raw, list) and len(avpu_raw) > 0:
+        avpu_raw = avpu_raw[0]
+    elif not avpu_raw:
+        avpu_raw = 'A'
+
+    ctx['avpu_score'] = str(avpu_raw)
+
     # KHỞI TẠO CONTEXT
     # Lấy giá trị sốt trước
     has_fever = int(c.get('fever', 0) or 0)
