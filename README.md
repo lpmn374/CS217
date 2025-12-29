@@ -77,6 +77,7 @@ Dữ liệu được quản lý chặt chẽ thông qua các bảng liên kết:
 * **`Patient`**: Thông tin hành chính bệnh nhi.
 * **`ClinicalAssessment`**: Triệu chứng lâm sàng.
 * **`VitalSignsNeuro`**: Dấu hiệu sinh tồn & Thần kinh.
+* **`LabTests`**: Xét nghiệm.
 * **`HFMDGrading`**: Phân độ và biến chứng.
 * **`TreatmentPlan`**: Kế hoạch điều trị.
 * **`DiagnosticOutput`**: Kết quả tổng hợp.
@@ -106,6 +107,6 @@ Nếu bạn muốn tùy chỉnh lại hệ thống, hãy chú ý đến các fil
 <div align="center">
   <b>Phát triển bởi Võ Minh Ngọc • © 2025</b>
 </div>
-<div> 
+<div align="center">
     <b>Cập nhật, chỉnh sửa bởi Lê Phạm Mỹ Ngọc và Nguyễn Phan Phương Ngân • © 2025</b>
 </div>

@@ -201,18 +201,18 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 
 ('R2.2.4', 904, 'Differential', 
 'skin_rash == 1 and rash_type == "Hoại tử trung tâm" and fever_temp >= 39.0 and symptom_progression_speed == "Very Fast" and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Nhiễm khuẩn huyết do não mô cầu"; stop_program = True; ecommended_next_step.append("Trẻ nghi ngờ mắc Nhiễm khuẩn huyết do Não mô cầu. Cần nhanh đưa trẻ đến cơ sở y tế để kiểm tra, cấp cứu và làm xét nghiệm loại trừ. ");'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Nhiễm khuẩn huyết do não mô cầu"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Nhiễm khuẩn huyết do Não mô cầu. Cần nhanh đưa trẻ đến cơ sở y tế để kiểm tra, cấp cứu và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.5', 903, 'Differential', 
 'skin_rash == 1 and rash_type == "Mụn mủ" and skin_rash_pain == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Viêm da mủ"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Viêm da mủ. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.6', 902, 'Differential', 
-'skin_rash == 1 and rash_type == "Hồng ban và sần" and post_auricular_lymph_nodes == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
+'skin_rash == 1 and rash_type == "hong_ban_san" and post_auricular_lymph_nodes == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt phát ban"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Sốt phát ban. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.7', 901, 'Differential', 
-'skin_rash == 1 and rash_type == "Hồng ban đa dạng" and rash_itchiness == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
+'skin_rash == 1 and rash_type == "hong_ban_da_dang" and rash_itchiness == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Dị ứng da"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Dị ứng da. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 -- =====================================================

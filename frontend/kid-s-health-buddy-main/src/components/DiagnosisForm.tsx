@@ -659,7 +659,7 @@ export function DiagnosisForm({ onSubmit, isLoading, resultData }: DiagnosisForm
             {formData.symptoms.skin_rash && (
               <div className="space-y-3 pl-4 border-l-2 border-green-100 animate-in slide-in-from-left-2">
                 <div className="space-y-1">
-                  <Label className="text-[10px] font-bold">Dạng ban & Tính chất</Label>
+                  <Label className="text-[10px] font-bold">Dạng ban chính/ Tính chất</Label>
                   <Select value={formData.symptoms.rash_type || "Phỏng nước điển hình"} onValueChange={v => updateSymptom('rash_type', v)}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -668,8 +668,8 @@ export function DiagnosisForm({ onSubmit, isLoading, resultData }: DiagnosisForm
                       <SelectItem value="Chấm xuất huyết">Chấm xuất huyết</SelectItem>
                       <SelectItem value="Bầm máu">Bầm máu</SelectItem>
                       <SelectItem value="Hoại tử trung tâm">Hoại tử trung tâm</SelectItem>
-                      <SelectItem value="Hồng ban và sẩn">Hồng ban xen kẽ ít dạng sẩn (Vết như muỗi chích)</SelectItem>
-                      <SelectItem value="Hồng ban đa dạng">Hồng ban đa dạng</SelectItem>
+                      <SelectItem value="hong_ban_san">Hồng ban xen kẽ ít dạng sẩn (Vết như muỗi chích)</SelectItem>
+                      <SelectItem value="hong_ban_da_dang">Hồng ban đa dạng</SelectItem>
                     </SelectContent>
                   </Select>
                   <Label className="text-[10px] font-bold">Vị trí ban:</Label>
