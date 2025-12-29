@@ -338,6 +338,7 @@
 // }
 
 import { useState, useMemo, useEffect } from 'react';
+import { Header } from '@/components/Header'; 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -453,6 +454,7 @@ export default function History() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-6">
+      <Header />
       <main className="container max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
