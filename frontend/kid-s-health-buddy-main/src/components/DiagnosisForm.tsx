@@ -761,7 +761,7 @@ export function DiagnosisForm({ onSubmit, isLoading, resultData }: DiagnosisForm
               <SymptomToggle label="Liệt dây sọ (Nuốt sặc/Thay giọng)" checked={formData.vitals.cranial_nerve_palsy} onChange={v => updateVital('cranial_nerve_palsy', v)} />
             </div>
             <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-              <div className="space-y-1"><Label className="text-[10px] font-bold">AVPU</Label>
+              <div className="space-y-1"><Label className="text-[10px] font-bold">AVPU (Tỉnh táo {'->'} Hôn mê)</Label>
                 <Select value={formData.vitals.avpu_score} onValueChange={v => updateVital('avpu_score', v)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="A">A (Tỉnh táo)</SelectItem><SelectItem value="V">V (Đáp ứng với lời nói: Không tỉnh hoàn toàn nhưng đáp ứng khi được gọi tên hoặc có người nói chuyện)</SelectItem><SelectItem value="P">P (Đáp ứng với kích thích đau: Không đáp ứng với lời nói, nhưng có phản ứng như mở mắt, cử động khi có kích thích đau)</SelectItem><SelectItem value="U">U (Hôn mê)</SelectItem></SelectContent>
