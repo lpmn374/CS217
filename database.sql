@@ -10,7 +10,6 @@ SET time_zone = "+00:00";
 CREATE TABLE `Patient` (
   `patient_id` int(11) NOT NULL AUTO_INCREMENT,
   `full_name` varchar(100) NOT NULL,
-  `date_of_birth` DATE DEFAULT NULL, -- Thêm mới
   `age_months` int(11) NOT NULL CHECK (`age_months` >= 0),
   `gender` varchar(10) NOT NULL,
   `epidemiology_contact` tinyint(1) DEFAULT 0,
@@ -26,7 +25,7 @@ CREATE TABLE `ClinicalAssessment` (
   `patient_id` int(11) DEFAULT NULL,
   `fever` tinyint(1) DEFAULT 0,
   `fever_temp` float DEFAULT NULL,
-  `fever_duration_days` int(11) DEFAULT 0,
+  `fever_duration_days` int(11) DEFAULT NULL,
   `fever_refractory` tinyint(1) DEFAULT 0,
   `symptom_progression_speed` varchar(20) DEFAULT 'Normal',
   `mouth_ulcer` tinyint(1) DEFAULT 0,
@@ -55,15 +54,15 @@ CREATE TABLE `ClinicalAssessment` (
 CREATE TABLE `VitalSignsNeuro` (
   `vsn_id` int(11) NOT NULL AUTO_INCREMENT,
   `patient_id` int(11) DEFAULT NULL,
-  `heart_rate` int(11) DEFAULT NULL CHECK (`heart_rate` >= 0),
-  `respiratory_rate` int(11) DEFAULT NULL CHECK (`respiratory_rate` >= 0),
+  `heart_rate` int(11) DEFAULT NULL CHECK (`heart_rate` > 0),
+  `respiratory_rate` int(11) DEFAULT NULL CHECK (`respiratory_rate` > 0),
   `respiratory_distress` tinyint(1) DEFAULT 0,
-  `systolic_bp` int(11) DEFAULT NULL CHECK (`systolic_bp` >= 0),
-  `diastolic_bp` int(11) DEFAULT NULL CHECK (`diastolic_bp` >= 0),
-  `pulse_pressure` int(11) DEFAULT NULL CHECK (`pulse_pressure` >= 0),
+  `systolic_bp` int(11) DEFAULT NULL CHECK (`systolic_bp` > 0),
+  `diastolic_bp` int(11) DEFAULT NULL CHECK (`diastolic_bp` > 0),
+  `pulse_pressure` int(11) DEFAULT NULL CHECK (`pulse_pressure` > 0),
   `unmeasurable_bp_pulse` tinyint(1) DEFAULT 0,
-  `capillary_refill_time` int(11) DEFAULT NULL CHECK (`capillary_refill_time` >= 0),
-  `spo2` float DEFAULT NULL CHECK (`spo2` >= 0 AND `spo2` <= 100),
+  `capillary_refill_time` int(11) DEFAULT NULL CHECK (`capillary_refill_time` > 0),
+  `spo2` float DEFAULT NULL CHECK (`spo2` > 0 AND `spo2` <= 100),
   `apnea_gasping` tinyint(1) DEFAULT 0,
   `cyanosis` tinyint(1) DEFAULT 0,
   `mottled_skin` tinyint(1) DEFAULT 0,
@@ -76,7 +75,7 @@ CREATE TABLE `VitalSignsNeuro` (
   `cranial_nerve_palsy` tinyint(1) DEFAULT 0,
   `muscle_tone_increased` tinyint(1) DEFAULT 0,
   `avpu_score` char(1) DEFAULT 'A',
-  `coma_gcs` int(11) DEFAULT NULL CHECK (`coma_gcs` >= 0),
+  `coma_gcs` int(11) DEFAULT NULL CHECK (`coma_gcs` >= 3),
   PRIMARY KEY (`vsn_id`),
   CONSTRAINT `fk_vsn_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -163,11 +162,11 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); priority_level = "1"; recommended_next_step.append("Hồi sức tích cực – chuyển tuyến chuyên sâu. ");'),
 
 ('R2.3.3', 990, 'Complication', 
-'(heart_rate > 150) or (capillary_refill_time > 2) or (mottled_skin == 1) or (sweating == 1)', 
+'(heart_rate > 150) or (heart_rate < 40) or (capillary_refill_time > 2) or (mottled_skin == 1) or (sweating == 1)', 
 'if "Tim mạch" not in complication_type: complication_type.append("Tim mạch"); priority_level = "1"; recommended_next_step.append("Theo dõi huyết động, cảnh báo sốc. ");'),
 
 ('R2.3.4', 985, 'Complication', 
-'(respiratory_distress == 1) or (respiratory_rate > 50) or (respiratory_rate_high == 1) or (spo2 < 94) or (stridor == 1) or (apnea_gasping == 1)', 
+'(respiratory_distress == 1) or (respiratory_rate > 50) or (respiratory_rate < 10) or (respiratory_rate_high == 1) or (spo2 < 94) or (stridor == 1) or (apnea_gasping == 1)', 
 'if "Hô hấp" not in complication_type: complication_type.append("Hô hấp"); priority_level = "1"; recommended_next_step.append("Thở oxy, theo dõi sát, chuẩn bị đặt nội khí quản nếu xấu. ");'),
 
 ('R2.3.5', 980, 'Complication', 
@@ -254,7 +253,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'current_grade = "Độ 3"; oxygen_support = True;'),
 
 ('G2B2', 185, 'Grading', 
-'(fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, fever_temp - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"])', 
+'((mouth_ulcer == 1 or skin_rash == 1) and fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, fever_temp - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"])', 
 'current_grade = "Độ 2b (Nhóm 2)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh");'),
 
 ('G2B1', 180, 'Grading', 
