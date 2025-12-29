@@ -545,18 +545,31 @@ def diagnose():
     v = data.get('vitals', {})
     l = data.get('lab', {})
 
+    def to_int(val):
+        if val is None or val == '': return None
+        try:
+            return int(val)
+        except:
+            return None
+
+    def to_float(val):
+        if val is None or val == '': return None
+        try:
+            return float(val)
+        except:
+            return None
     # KHỞI TẠO CONTEXT
     ctx = {
         'full_name': p.get('full_name', 'N/A'),
-        'age_months': int(p.get('age_months', 0) or 0),
-        'gender': p.get('gender', 'Nam'),
+        'age_months': to_int(p.get('age_months')) ,
+        'gender': p.get('gender', 'N/A'),
         'epidemiology_contact': int(p.get('epidemiology_contact', 0) or 0),
         'has_comorbidities': int(p.get('has_comorbidities', 0) or 0),
         'comorbidities_detail': p.get('comorbidities_detail', ''),
 
         'fever': int(c.get('fever', 0) or 0),
-        'fever_temp': float(c.get('fever_temp', 0) or 0),
-        'fever_duration_days': int(c.get('fever_duration_days', 0) or 0),
+        'fever_temp': to_float(c.get('fever_temp')),
+        'fever_duration_days': int(c.get('fever_duration_days', 1) or 0),
         'fever_refractory': int(c.get('fever_refractory', 0) or 0),
         'mouth_ulcer': int(c.get('mouth_ulcer', 0) or 0),
         'ulcer_characteristics': c.get('ulcer_characteristics', 'Typical'),
@@ -577,14 +590,14 @@ def diagnose():
         'poor_feeding': int(c.get('poor_feeding', 0) or 0),
         'sore_throat': int(c.get('sore_throat', 0) or 0),
 
-        'heart_rate': int(v.get('heart_rate', 0) or 0),
-        'respiratory_rate': int(v.get('respiratory_rate', 0) or 0),
+        'heart_rate': to_int(v.get('heart_rate')),
+        'respiratory_rate': to_int(v.get('respiratory_rate')),
         'respiratory_rate_high': int(v.get('respiratory_rate_high', 0) or 0),
         'respiratory_distress': int(v.get('respiratory_distress', 0) or 0),
-        'spo2': float(v.get('spo2', 100) or 98),
-        'systolic_bp': int(v.get('systolic_bp', 0) or 95),
-        'diastolic_bp': int(v.get('diastolic_bp', 0) or 65),
-        'pulse_pressure': int(v.get('pulse_pressure', 0) or 30),
+        'spo2': to_float(v.get('spo2')),
+        'systolic_bp': to_int(v.get('systolic_bp')),
+        'diastolic_bp': to_int(v.get('diastolic_bp')),
+        'pulse_pressure': to_int(v.get('pulse_pressure')),
         'unmeasurable_bp_pulse': int(v.get('unmeasurable_bp_pulse', 0) or 0),
         'capillary_refill_time': int(v.get('capillary_refill_time', 0) or 0),
         'mottled_skin': int(v.get('mottled_skin', 0) or 0),
