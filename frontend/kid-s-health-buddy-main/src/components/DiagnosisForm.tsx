@@ -511,7 +511,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
               value={formData.full_name} 
               onChange={e => setFormData({...formData, full_name: e.target.value})} 
               required 
-            /><p className="text-[10px] text-red-500 font-medium">* Bắt buộc điền.</p>
+            />{!formData.full_name && <p className="text-[10px] text-red-500 font-medium">* Bắt buộc điền.</p>}
           </div>
           <div className="space-y-1">
               <Label className="text-xs">Số tháng tuổi</Label>
@@ -525,7 +525,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                   age_months: Math.max(0, parseInt(e.target.value) || 0) 
                 }))} 
                 required 
-              /><p className="text-[10px] text-red-500 font-medium">* Bắt buộc điền.</p>
+              />{!formData.age_months && <p className="text-[10px] text-red-500 font-medium">* Bắt buộc điền.</p>}
             </div>
           <div className="grid grid-cols-2 gap-2">
             {/* Giới tính */}
