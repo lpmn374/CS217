@@ -236,7 +236,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- BƯỚC 7: Ca nghi ngờ
 ('R_STEP7', 500, 'Diagnosis', 
 'diagnosis_status == None and (fever == 1 and (poor_feeding == 1 or sore_throat == 1) and epidemiology_contact == 1 and mouth_ulcer == 0 and skin_rash == 0)', 
-'diagnosis_status = "Ca nghi ngờ TCM"; priority_level = "3"; recommended_next_step.append("Theo dõi sát dấu hiệu loét miệng/phát ban trong 24 - 48h tới". );'),
+'diagnosis_status = "Ca nghi ngờ TCM"; priority_level = "3"; recommended_next_step.append("Theo dõi sát dấu hiệu loét miệng/phát ban trong 24 - 48h tới. ");'),
 
 -- =====================================================
 -- BƯỚC 4: GHI ĐÈ THỂ TỐI CẤP (8) (Priority: 400 -> 850)
