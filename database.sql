@@ -189,11 +189,11 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- =====================================================
 ('R2.2.1', 907, 'Differential', 
 'mouth_ulcer == 1 and skin_rash == 0 and ulcer_characteristics == "Atypical" and history_ulcer_recurrence == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Ap-tơ"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Ap-tơ. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ". );'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Ap-tơ"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Ap-tơ. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.2', 906, 'Differential', 
 'skin_rash == 1 and rash_type == "Phỏng nước điển hình" and skin_rash_location == "Toàn thân" and rash_stages == "Nhiều độ tuổi" and rash_itchiness == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
-'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Thủy đậu"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Thủy đậu. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ ". );'),
+'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Thủy đậu"; stop_program = True; recommended_next_step.append("Trẻ nghi ngờ mắc Thủy đậu. Cần đưa trẻ đến cơ sở y tế để kiểm tra và làm xét nghiệm loại trừ. ");'),
 
 ('R2.2.3', 905, 'Differential', 
 'skin_rash == 1 and (rash_type == "Chấm xuất huyết" or rash_type == "Bầm máu") and fever_temp >= 39.0 and mucosal_bleeding == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
@@ -221,7 +221,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- BƯỚC 4: Ca lâm sàng điển hình
 ('R_STEP4', 800, 'Diagnosis', 
 '(mouth_ulcer == 1 and ulcer_characteristics == "Typical" and history_ulcer_recurrence == 0) or (skin_rash == 1 and rash_type == "Phỏng nước điển hình" and (skin_rash_location == "Lòng bàn tay, chân, gối, khuỷu, mông" or epidemiology_contact == 1 or rash_stages == "Đồng đều"))', 
-'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Cấp tính"; priority_level = "2"; recommended_next_step.append("Theo dõi sát các dấu hiệu chuyển độ và làm xét nghiệm vi rút để khẳng định.");'),
+'diagnosis_status = "Ca lâm sàng TCM"; clinical_form = "Cấp tính"; priority_level = "2"; recommended_next_step.append("Theo dõi sát các dấu hiệu chuyển độ và làm xét nghiệm vi rút để khẳng định. ");'),
 
 -- BƯỚC 5: Ca lâm sàng không điển hình (chỉ loét miệng)
 ('R_STEP5', 700, 'Diagnosis', 
@@ -261,11 +261,11 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 
 ('G3', 190, 'Grading', 
 '(heart_rate > 170 and fever == 0) or (heart_rate > (170 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (age_months < 12 and systolic_bp >= 100) or (age_months >= 12 and age_months < 24 and systolic_bp >= 110) or (age_months >= 24 and systolic_bp >= 115) or (respiratory_rate_high == 1) or (respiratory_distress == 1) or (spo2 < 94.0) or (mottled_skin == 1) or (sweating == 1)', 
-'current_grade = "Độ 3"; oxygen_support = True; recommended_next_step.append("Biến chứng thần kinh thực vật, suy hô hấp, tuần hoàn nặng. Theo dõi sát mạch, huyết áp.");'),
+'current_grade = "Độ 3"; oxygen_support = True; recommended_next_step.append("Biến chứng thần kinh thực vật, suy hô hấp, tuần hoàn nặng. Theo dõi sát mạch, huyết áp. ");'),
 
 ('G2B2', 185, 'Grading', 
 '((mouth_ulcer == 1 or skin_rash == 1) and fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"])', 
-'current_grade = "Độ 2b (Nhóm 2)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); recommended_next_step.append("Có biến chứng thần kinh nặng. Điều trị tích cực, theo dõi sát các chỉ số như mạch, huyết áp, SpO2.");'),
+'current_grade = "Độ 2b (Nhóm 2)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); recommended_next_step.append("Có biến chứng thần kinh nặng. Điều trị tích cực, theo dõi sát các chỉ số như mạch, huyết áp, SpO2. ");'),
 
 ('G2B1', 180, 'Grading', 
 '(startle_reflex_exam == 1) or (startle_reflex_history >= 2) or (startle_reflex_history >= 1 and lethargy == 1) or (startle_reflex_history >= 1 and heart_rate > 130 and fever == 0) or (startle_reflex_history >= 1 and heart_rate > (130 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1)', 
