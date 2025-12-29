@@ -98,12 +98,19 @@ CREATE TABLE `LabTests` (
 -- 5. Bảng HFMDGrading (Phân độ chi tiết)
 CREATE TABLE `HFMDGrading` (
   `grading_id` int(11) NOT NULL AUTO_INCREMENT,
-  `patient_id` int(11) DEFAULT NULL,
-  `current_grade` varchar(50) DEFAULT NULL,
-  `complication_type` text DEFAULT NULL,
+  `current_grade` varchar(50) NOT NULL,
+  `description` text DEFAULT NULL,
   PRIMARY KEY (`grading_id`),
-  CONSTRAINT `fk_grading_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  UNIQUE KEY `uk_grade` (`current_grade`) -- Rất quan trọng để làm khóa ngoại
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- NẠP DỮ LIỆU DANH MỤC (BẮT BUỘC)
+INSERT INTO `HFMDGrading` (`current_grade`, `description`) VALUES 
+('Độ 1', 'Tay chân miệng thể nhẹ'),
+('Độ 2a', 'Biến chứng thần kinh nhẹ'),
+('Độ 2b (Nhóm 1)', 'Biến chứng thần kinh nặng N1'),
+('Độ 2b (Nhóm 2)', 'Biến chứng thần kinh nặng N2'),
+('Độ 3', 'Biến chứng thần kinh thực vật/Hô hấp/Tuần hoàn'),
+('Độ 4', 'Nguy kịch');
 
 -- 6. Bảng TreatmentPlan (Kế hoạch điều trị)
 CREATE TABLE `TreatmentPlan` (
@@ -127,14 +134,14 @@ CREATE TABLE `DiagnosticOutput` (
   `clinical_form` varchar(100) DEFAULT NULL,
   `complication_type` text DEFAULT NULL,
   `lab_orders` text DEFAULT NULL,
+  `recommended_next_step` text DEFAULT NULL,
   `treatment_location` varchar(200) DEFAULT NULL,
   `priority_level` char(1) DEFAULT '3',
   `differential_alert` text DEFAULT NULL,
-  `recommended_next_step` text DEFAULT NULL,
   PRIMARY KEY (`output_id`),
+  CONSTRAINT `fk_output_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_output_grading` FOREIGN KEY (`current_grade`) REFERENCES `HFMDGrading` (`current_grade`) ON DELETE CASCADE
-  CONSTRAINT `fk_output_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 8. Bảng rule_base
 CREATE TABLE `rule_base` (
