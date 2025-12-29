@@ -167,7 +167,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'if "Tim mạch" not in complication_type: complication_type.append("Tim mạch"); priority_level = "1"; recommended_next_step.append("Theo dõi huyết động, cảnh báo sốc. ");'),
 
 ('R2.3.4', 985, 'Complication', 
-'(respiratory_distress == 1) or (respiratory_rate > 50) or ((respiratory_rate or 25) < 10) or (respiratory_rate_high == 1) or (spo2 < 94) or (stridor == 1) or (apnea_gasping == 1)', 
+'(respiratory_distress == 1) or (respiratory_rate > 50) or ((respiratory_rate or 25) < 10) or (respiratory_rate_high == 1) or (spo2 < 94) or (apnea_gasping == 1)', 
 'if "Hô hấp" not in complication_type: complication_type.append("Hô hấp"); priority_level = "1"; recommended_next_step.append("Thở oxy, theo dõi sát, chuẩn bị đặt nội khí quản nếu xấu. ");'),
 
 ('R2.3.5', 980, 'Complication', 
@@ -250,7 +250,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'current_grade = "Độ 4"; priority_level = "1"; oxygen_support = True;'),
 
 ('G3', 190, 'Grading', 
-'(heart_rate > 170 and fever == 0) or (heart_rate > (170 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (age_months < 12 and systolic_bp >= 100) or (age_months >= 12 and age_months < 24 and systolic_bp >= 110) or (age_months >= 24 and systolic_bp >= 115) or (respiratory_rate_high == 1) or (respiratory_distress == 1) or (stridor == 1) or (spo2 < 94.0) or (mottled_skin == 1) or (sweating == 1)', 
+'(heart_rate > 170 and fever == 0) or (heart_rate > (170 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (age_months < 12 and systolic_bp >= 100) or (age_months >= 12 and age_months < 24 and systolic_bp >= 110) or (age_months >= 24 and systolic_bp >= 115) or (respiratory_rate_high == 1) or (respiratory_distress == 1) or (spo2 < 94.0) or (mottled_skin == 1) or (sweating == 1)', 
 'current_grade = "Độ 3"; oxygen_support = True;'),
 
 ('G2B2', 185, 'Grading', 
@@ -298,5 +298,17 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 ('T2.6.3', 40, 'Treatment', 
 'current_grade in ["Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4"]', 
 'treatment_location = "Bệnh viện tỉnh hoặc Bệnh viện Nhi/Truyền nhiễm tuyến cuối"; transfer_needed = True ; priority_level = "1" ; recommended_next_step.append("Hồi sức tích cực, hội chẩn và chuyển tuyến an toàn nếu không đủ điều kiện. ")');
+
+-- Nếu là Độ 1 mà có dấu hiệu thần kinh nhẹ (tương ứng R2.3.1) -> Lên Độ 2b Nhóm 1
+INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `action_then`) 
+VALUES ('UPGRADE_2B1', 182, 'UpGrading', 
+'current_grade == "Độ 1" and "Thần kinh" in complication_type and (startle_reflex_history >= 1 or lethargy == 1)', 
+'current_grade = "Độ 2b (Nhóm 1)";');
+
+-- Nếu là Độ 1 mà có dấu hiệu thần kinh nặng (tương ứng R2.3.2) -> Lên Độ 2b Nhóm 2
+INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `action_then`) 
+VALUES ('UPGRADE_2B2', 187, 'UpGrading', 
+'current_grade == "Độ 1" and "Thần kinh" in complication_type and (avpu_score in ["V", "P", "U"] or coma_gcs < 13 or limb_weakness == 1)', 
+'current_grade = "Độ 2b (Nhóm 2)";');
 
 COMMIT;

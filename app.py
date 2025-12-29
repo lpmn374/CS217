@@ -272,6 +272,26 @@ def run_python_inference(rules, context):
     8. Phân tuyến điều trị
     """
     
+    """
+    Chạy bộ suy diễn: Vừa PRINT ra console, vừa LƯU VẾT (Inference Trace) để gửi về Frontend.
+    Đã tích hợp logic tính pulse_pressure và xử lý lỗi so sánh None.
+    """
+    # 1. Khởi tạo danh sách lưu vết suy diễn cho Frontend
+    inference_trace = []
+
+    def log_and_print(step_label, message, rule_id=None, status="info"):
+        """Hàm hỗ trợ: Vừa print console, vừa ghi log cho Frontend"""
+        prefix = f"[{step_label}]" if step_label else ""
+        rule_info = f" (Luật {rule_id})" if rule_id else ""
+        print(f"{prefix} {message}{rule_info}")
+        
+        inference_trace.append({
+            "step": step_label,
+            "message": message,
+            "rule_id": rule_id,
+            "status": status  # info, success, warning, danger
+        })
+
     # Đảm bảo các list không bị None
     for list_key in ['complication_type', 'recommended_next_step', 'lab_orders']:
         if context.get(list_key) is None:
@@ -295,48 +315,88 @@ def run_python_inference(rules, context):
     for rule_type in rules_by_type:
         rules_by_type[rule_type].sort(key=lambda x: x['priority'], reverse=True)
 
-    def execute_rule(rule): # Bỏ context và globals_dict ở đây
-        if not rule: return False
+    def execute_rule(rule, step_label="SUY DIỄN"): # Sửa lại tham số rõ ràng
+        if not rule or not isinstance(rule, dict): 
+            return False
         
-        cond = str(rule['condition_if']).replace('\xa0', ' ').strip()
-        cond = cond.replace('AND', 'and').replace('OR', 'or')
+        # 1. Chuẩn hóa điều kiện
+        cond_raw = str(rule.get('condition_if', '')).replace('\xa0', ' ').strip()
+        if not cond_raw: return False
+        
+        cond_python = cond_raw.replace('AND', 'and').replace('OR', 'or')
 
-        # Tạo safe_context để tính toán hiệu áp (pulse_pressure)
-        # nhưng vẫn giữ các giá trị khác là None để tránh trigger luật sai
+        # 2. Tạo context an toàn
         safe_ctx = context.copy()
-        if safe_ctx.get('systolic_bp') is not None and safe_ctx.get('diastolic_bp') is not None:
+        
+        # Xử lý AVPU
+        avpu = safe_ctx.get('avpu_score', 'A')
+        if isinstance(avpu, list):
+            avpu = avpu[0] if len(avpu) > 0 else 'A'
+        safe_ctx['avpu_score'] = str(avpu).strip().upper()
+
+        # Tính Pulse pressure
+        if safe_ctx.get('systolic_bp') and safe_ctx.get('diastolic_bp'):
             safe_ctx['pulse_pressure'] = safe_ctx['systolic_bp'] - safe_ctx['diastolic_bp']
 
         try:
-            # Truy cập trực tiếp globals_dict từ hàm cha
-            if eval(cond, globals_dict, safe_ctx):
-                print(f"✅ Luật {rule['rule_id']} THỎA MÃN")
-                actions = rule['action_then'].split(';')
+            # Thực thi kiểm tra điều kiện
+            if eval(cond_python, globals_dict, safe_ctx):
+                # Tìm phần thỏa mãn để log
+                satisfied_parts = []
+                parts = cond_raw.split(' OR ') if ' OR ' in cond_raw else [cond_raw]
+                
+                for p in parts:
+                    p_py = p.replace('AND', 'and').replace('OR', 'or').strip()
+                    try:
+                        if eval(p_py, globals_dict, safe_ctx):
+                            satisfied_parts.append(p.strip())
+                    except:
+                        continue
+
+                reason = " | ".join(satisfied_parts) if satisfied_parts else "Điều kiện phức hợp"
+                
+                # Ghi log vết suy diễn cho Frontend
+                log_and_print(step_label, f"Khớp luật {rule['rule_id']}: {reason}", rule_id=rule['rule_id'], status="success")
+                
+                # Thực thi các hành động (Action)
+                actions = rule.get('action_then', '').split(';')
                 for action in actions:
-                    act_strip = action.strip()
-                    if act_strip:
-                        # Thực thi trên context gốc
-                        exec(act_strip, globals_dict, context)
+                    if action.strip():
+                        exec(action.strip(), globals_dict, context)
                 return True
-        except TypeError:
-            # Bắt lỗi khi so sánh số với None (ví dụ: None > 150)
-            # Không làm gì cả, coi như luật không thỏa mãn do thiếu dữ liệu
-            return False
+                
         except Exception as e:
-            print(f"⚠️ Lỗi cú pháp luật {rule['rule_id']}: {e}")
+            if "NoneType" not in str(e):
+                print(f"   [!] Lỗi logic tại luật {rule.get('rule_id')}: {e}")
+        
         return False
+
+        # try:
+        #     # Nếu eval lỗi (do so sánh None với số), nó sẽ nhảy xuống except TypeError
+        #     if eval(cond, globals_dict, safe_ctx):
+        #         print(f"✅ Luật {rule['rule_id']} THỎA MÃN")
+        #         actions = rule['action_then'].split(';')
+        #         for action in actions:
+        #             exec(action.strip(), globals_dict, context)
+        #         return True
+        # except TypeError:
+        #     # Khi gặp None > 150 mà DB chưa có (or 0), luật này đơn giản là không thỏa mãn
+        #     return False
+        # except Exception as e:
+        #     print(f"⚠️ Lỗi cú pháp tại luật {rule['rule_id']}: {e}")
+        # return False
 
     # ============ QUY TRÌNH SUY DIỄN ============
     
     print("\n" + "="*80)
-    print("🔍 BẮT ĐẦU QUY TRÌNH SUY DIỄN")
+    log_and_print("HỆ THỐNG", "🔍 BẮT ĐẦU QUY TRÌNH SUY DIỄN", status="info")
     print("="*80)
     
     # BƯỚC 1: KIỂM TRA BIẾN CHỨNG
-    print("\n[BƯỚC 1] Kiểm tra biến chứng...")
+    log_and_print("BƯỚC 1", "Kiểm tra biến chứng...")
     if 'Complication' in rules_by_type:
         for rule in rules_by_type['Complication']:
-            execute_rule(rule)
+            execute_rule(rule, "BƯỚC 1") # Đảm bảo rule là dict
     
     has_complications = len(context.get('complication_type', [])) > 0
     print(f"→ Có biến chứng: {has_complications}")
@@ -344,13 +404,13 @@ def run_python_inference(rules, context):
         print(f"→ Các biến chứng: {', '.join(context['complication_type'])}")
     
     # BƯỚC 2: KIỂM TRA BỆNH KHÁC (DIFFERENTIAL)
-    print("\n[BƯỚC 2] Kiểm tra bệnh khác (Differential)...")
+    log_and_print("BƯỚC 2", "Kiểm tra chẩn đoán phân biệt (bệnh khác - Differential)...")
     if 'Differential' in rules_by_type:
         for rule in rules_by_type['Differential']:
-            if execute_rule(rule):
-                if context.get('stop_program'):
-                    print("⛔ DỪNG: Nghi ngờ bệnh khác")
-                    return True  # Dừng chương trình
+            if execute_rule(rule, "BƯỚC 2"):
+                if context.get('stop_program') or context.get('differential_alert'):
+                    log_and_print("⛔ DỪNG", f"Nghi ngờ bệnh khác: {context.get('differential_alert')}", status="warning")
+                    return True, inference_trace
     
     if context.get('differential_alert'):
         print(f"→ Phát hiện: {context['differential_alert']}")
@@ -359,79 +419,154 @@ def run_python_inference(rules, context):
         print("→ Không phải bệnh khác, tiếp tục phân loại TCM")
     
     # BƯỚC 3: PHÂN LOẠI CA BỆNH (4->7)
-    print("\n[BƯỚC 3] Phân loại ca bệnh TCM...")
-    diagnosis_rules = []
-    if 'Diagnosis' in rules_by_type:
-        # Lấy luật STEP4, STEP5, STEP6, STEP7
-        diagnosis_rules = [r for r in rules_by_type['Diagnosis'] 
-                          if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
+
+    # diagnosis_rules = []
+    # if 'Diagnosis' in rules_by_type:
+    #     # Lấy luật STEP4, STEP5, STEP6, STEP7
+    #     diagnosis_rules = [r for r in rules_by_type['Diagnosis'] 
+    #                       if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
     
+    log_and_print("BƯỚC 3", "Phân loại ca bệnh TCM (R_STEP4 -> R_STEP7)...")
     case_found = False
-    for rule in diagnosis_rules:
-        if execute_rule(rule):
-            case_found = True
-            print(f"→ Phân loại: {context.get('diagnosis_status')} - {context.get('clinical_form')}")
-            break
+    if 'Diagnosis' in rules_by_type:
+        diag_rules = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
+        for rule in diag_rules:
+            for rule in diag_rules:
+                if execute_rule(rule, "BƯỚC 3"): # Sửa ở đây
+                    case_found = True
+                    # log_and_print đã được gọi bên trong execute_rule, không cần gọi đè ở ngoài nếu không muốn lặp log
+                    break
     
     # BƯỚC 4: KIỂM TRA THỂ TỐI CẤP (STEP8)
-    print("\n[BƯỚC 4] Kiểm tra thể tối cấp...")
+
+    # print("\n[BƯỚC 4] Kiểm tra thể tối cấp...")
+    # if 'Diagnosis' in rules_by_type:
+    #     step8_rule = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP8']
+    #     if step8_rule:
+    #         if execute_rule(step8_rule[0]):
+    #             print(f"→ Cập nhật: {context.get('clinical_form')}")
+
+    log_and_print("BƯỚC 4", "Kiểm tra thể tối cấp (R_STEP8)...")
     if 'Diagnosis' in rules_by_type:
-        step8_rule = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP8']
-        if step8_rule:
-            if execute_rule(step8_rule[0]):
-                print(f"→ Cập nhật: {context.get('clinical_form')}")
+        step8 = next((r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP8'), None)
+        if step8: execute_rule(step8, "BƯỚC 4")
+            # log_and_print("BƯỚC 4", f"→ Cập nhật lâm sàng: {context.get('clinical_form')}")
     
     # BƯỚC 5: KIỂM TRA CA XÁC ĐỊNH (STEP9)
-    print("\n[BƯỚC 5] Kiểm tra ca xác định...")
+
+    # print("\n[BƯỚC 5] Kiểm tra ca xác định...")
+    # if 'Diagnosis' in rules_by_type:
+    #     step9_rule = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP9']
+    #     if step9_rule:
+    #         if execute_rule(step9_rule[0]):
+    #             print(f"→ Cập nhật: {context.get('diagnosis_status')}")
+    #             case_found = True
+
+    log_and_print("BƯỚC 5", "Kiểm tra tiêu chuẩn ca xác định (R_STEP9)...")
     if 'Diagnosis' in rules_by_type:
-        step9_rule = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP9']
-        if step9_rule:
-            if execute_rule(step9_rule[0]):
-                print(f"→ Cập nhật: {context.get('diagnosis_status')}")
+        step9 = next((r for r in rules_by_type['Diagnosis'] if r['rule_id'] == 'R_STEP9'), None)
+        if step9: 
+            if execute_rule(step9, "BƯỚC 5"):
                 case_found = True
     
+    # if not case_found:
+    #     print("→ KHÔNG MẮC BỆNH TCM")
+    #     context['diagnosis_status'] = "Không mắc bệnh/Theo dõi thêm"
+    #     context['current_grade'] = "Không phân độ"
+    #     return True  # Dừng
+
+    # Xử lý nếu không tìm thấy ca bệnh
     if not case_found:
-        print("→ KHÔNG MẮC BỆNH TCM")
+        log_and_print("KẾT THÚC", "❌ KHÔNG PHÁT HIỆN DẤU HIỆU MẮC TCM", status="warning")
         context['diagnosis_status'] = "Không mắc bệnh/Theo dõi thêm"
         context['current_grade'] = "Không phân độ"
-        return True  # Dừng
+        return True, inference_trace
     
     # BƯỚC 6: PHÂN ĐỘ
-    print("\n[BƯỚC 6] Phân độ bệnh...")
+
+    # print("\n[BƯỚC 6] Phân độ bệnh...")
+    # if 'Grading' in rules_by_type:
+    #     for rule in rules_by_type['Grading']:
+    #         if execute_rule(rule):
+    #             print(f"→ Phân độ: {context.get('current_grade')}")
+    #             break  # Dừng ở luật đầu tiên thỏa mãn
+    # if 'UpGrading' in rules_by_type: # NÂNG ĐỘ nếu thỏa điều kiện
+    #     for rule in rules_by_type['UpGrading']:
+    #         if execute_rule(rule):
+    #             print(f"→ Phân độ: {context.get('current_grade')}")
+
+    # if not context.get('current_grade'):
+    #     context['current_grade'] = "Độ 1"
+    #     print("→ Mặc định: Độ 1")
+
+    log_and_print("BƯỚC 6", "Tiến hành phân độ bệnh...")
+    # 1. Xét các luật phân độ chính (G4 -> G2A)
     if 'Grading' in rules_by_type:
-        for rule in rules_by_type['Grading']:
-            if execute_rule(rule):
-                print(f"→ Phân độ: {context.get('current_grade')}")
+        # Sắp xếp theo priority giảm dần để đảm bảo xét độ nặng trước
+        grading_rules = sorted(rules_by_type['Grading'], key=lambda x: x['priority'], reverse=True)
+        for rule in grading_rules:
+            if execute_rule(rule, "BƯỚC 6"):
+                log_and_print("BƯỚC 6", f"→ Kết quả phân độ: {context.get('current_grade')}")
                 break  # Dừng ở luật đầu tiên thỏa mãn
-    
+
+    # 2. Xét các luật nâng độ (UpGrading) nếu có
+    if 'UpGrading' in rules_by_type:
+        for rule in rules_by_type['UpGrading']:
+            if execute_rule(rule, "BƯỚC 6"):
+                log_and_print("BƯỚC 6", f"→ Cập nhật nâng độ: {context.get('current_grade')}")
+
+    # 3. Xử lý mặc định nếu chưa có độ
     if not context.get('current_grade'):
         context['current_grade'] = "Độ 1"
-        print("→ Mặc định: Độ 1")
-    
+        log_and_print("BƯỚC 6", "→ Không thỏa các dấu hiệu nặng, mặc định: Độ 1")
+
     # BƯỚC 7: CHỈ ĐỊNH CẬN LÂM SÀNG
-    print("\n[BƯỚC 7] Chỉ định cận lâm sàng...")
+
+    # print("\n[BƯỚC 7] Chỉ định cận lâm sàng...")
+    # if 'Lab' in rules_by_type:
+    #     for rule in rules_by_type['Lab']:
+    #         execute_rule(rule)
+    
+    # if context.get('lab_orders'):
+    #     print(f"→ Chỉ định: {len(context['lab_orders'])} xét nghiệm")
+    # else:
+    #     print("→ Không có chỉ định đặc biệt")
+
+    log_and_print("BƯỚC 7", "Đang xem xét các chỉ định cận lâm sàng...")
     if 'Lab' in rules_by_type:
         for rule in rules_by_type['Lab']:
-            execute_rule(rule)
+            # Truyền "BƯỚC 7" vào để execute_rule log đúng vị trí
+            execute_rule(rule, "BƯỚC 7")
     
     if context.get('lab_orders'):
-        print(f"→ Chỉ định: {len(context['lab_orders'])} xét nghiệm")
+        log_and_print("BƯỚC 7", f"→ Tổng cộng: {len(context['lab_orders'])} chỉ định đã được đưa ra.")
     else:
-        print("→ Không có chỉ định đặc biệt")
+        log_and_print("BƯỚC 7", "→ Kết quả: Không có chỉ định cận lâm sàng đặc biệt.")
     
     # BƯỚC 8: PHÂN TUYẾN ĐIỀU TRỊ
-    print("\n[BƯỚC 8] Phân tuyến điều trị...")
+
+    # print("\n[BƯỚC 8] Phân tuyến điều trị...")
+    # if 'Treatment' in rules_by_type:
+    #     for rule in rules_by_type['Treatment']:
+    #         if execute_rule(rule):
+    #             print(f"→ Tuyến điều trị: {context.get('treatment_location')}")
+    #             break
+
+    log_and_print("BƯỚC 8", "Đang xác định tuyến điều trị và hướng xử trí tiếp theo...")
     if 'Treatment' in rules_by_type:
-        for rule in rules_by_type['Treatment']:
-            if execute_rule(rule):
-                print(f"→ Tuyến điều trị: {context.get('treatment_location')}")
+        # Sắp xếp theo priority để chọn phương án điều trị tối ưu nhất/phù hợp nhất trước
+        treatment_rules = sorted(rules_by_type['Treatment'], key=lambda x: x['priority'], reverse=True)
+        for rule in treatment_rules:
+            if execute_rule(rule, "BƯỚC 8"):
+                log_and_print("BƯỚC 8", f"→ Tuyến điều trị: {context.get('treatment_location')}")
+                log_and_print("BƯỚC 8", f"→ Cần chuyển tuyến: {'Có' if context.get('transfer_needed') else 'Không'}")
                 break
     
     print("\n" + "="*80)
     print("✅ HOÀN THÀNH QUY TRÌNH SUY DIỄN")
     print("="*80 + "\n")
     
-    return False  # Không dừng, đã hoàn thành
+    return False, inference_trace  # Không dừng, đã hoàn thành
 
 def save_to_db(conn, ctx):
     """Lưu toàn bộ dữ liệu vào database"""
@@ -446,7 +581,7 @@ def save_to_db(conn, ctx):
             cursor.execute(sql_p, (
                 ctx.get('full_name', 'N/A'), 
                 ctx.get('age_months', 0),
-                ctx.get('gender', 'Nam'),
+                ctx.get('gender', ''),
                 ctx.get('epidemiology_contact', 0),
                 ctx.get('has_comorbidities', 0),
                 ctx.get('comorbidities_detail', '')
@@ -568,14 +703,7 @@ def diagnose():
         try: return float(val)
         except: return None
 
-    # Trong hàm diagnose, trước khi tạo ctx
-    avpu_raw = v.get('avpu_score', 'A')
-    if isinstance(avpu_raw, list) and len(avpu_raw) > 0:
-        avpu_raw = avpu_raw[0]
-    elif not avpu_raw:
-        avpu_raw = 'A'
-
-    ctx['avpu_score'] = str(avpu_raw)
+    
 
     # KHỞI TẠO CONTEXT
     # Lấy giá trị sốt trước
@@ -623,7 +751,6 @@ def diagnose():
         'mottled_skin': int(v.get('mottled_skin', 0) or 0),
         'sweating': int(v.get('sweating', 0) or 0),
         'cyanosis': int(v.get('cyanosis', 0) or 0),
-        'stridor': int(v.get('stridor', 0) or 0),
         'apnea_gasping': int(v.get('apnea_gasping', 0) or 0),
         'startle_reflex_history': int(v.get('startle_reflex_history', 0) or 0),
         'startle_reflex_exam': int(v.get('startle_reflex_exam', 0) or 0),
@@ -665,22 +792,32 @@ def diagnose():
     conn = connect_db()
     if not conn: 
         return jsonify({"error": "Lỗi kết nối CSDL"}), 500
-    
+
+    # Khởi tạo biến trace để tránh lỗi nếu try block thất bại
+    inference_trace = []
+
     try:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM rule_base ORDER BY priority DESC")
             all_rules = cursor.fetchall()
         
-        # CHẠY QUY TRÌNH SUY DIỄN
-        run_python_inference(all_rules, ctx)
+        # --- SỬA TẠI ĐÂY: Chạy suy diễn và lấy vết (trace) ---
+        stop_flag, inference_trace = run_python_inference(all_rules, ctx)
 
         # Lưu vào database
         save_to_db(conn, ctx)
-        
+
+    except Exception as e:
+        print(f"Lỗi trong quá trình xử lý: {e}")
+        return jsonify({"error": str(e)}), 500    
     finally:
         conn.close()
     
-    return jsonify(ctx)
+     # --- SỬA TẠI ĐÂY: Trả về kết quả chẩn đoán kèm Cây suy diễn ---
+    return jsonify({
+        "result": ctx,
+        "inference_trace": inference_trace
+    })
 
 @app.route('/history', methods=['GET'])
 def get_history():
