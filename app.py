@@ -402,6 +402,8 @@ def run_python_inference(rules, context):
     print(f"→ Có biến chứng: {has_complications}")
     if has_complications:
         print(f"→ Các biến chứng: {', '.join(context['complication_type'])}")
+    else:
+        print("→ Không có biến chứng.")
     
     # BƯỚC 2: KIỂM TRA BỆNH KHÁC (DIFFERENTIAL)
     log_and_print("BƯỚC 2", "Kiểm tra chẩn đoán phân biệt (bệnh khác - Differential)...")
@@ -427,16 +429,18 @@ def run_python_inference(rules, context):
     #                       if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
     
     log_and_print("BƯỚC 3", "Phân loại ca bệnh TCM (R_STEP4 -> R_STEP7)...")
+    # Lấy danh sách luật chuẩn
+    diag_rules = [r for r in rules_by_type.get('Diagnosis', []) 
+              if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
+    # Sắp xếp theo priority giảm dần (quan trọng)
+    diag_rules.sort(key=lambda x: x['priority'], reverse=True)
     case_found = False
-    if 'Diagnosis' in rules_by_type:
-        diag_rules = [r for r in rules_by_type['Diagnosis'] if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
-        for rule in diag_rules:
-            for rule in diag_rules:
-                if execute_rule(rule, "BƯỚC 3"): # Sửa ở đây
-                    case_found = True
-                    # log_and_print đã được gọi bên trong execute_rule, không cần gọi đè ở ngoài nếu không muốn lặp log
-                    break
-    
+    for rule in diag_rules:
+        if execute_rule(rule, "BƯỚC 3"):
+            case_found = True
+            log_and_print("HỆ THỐNG", f"✅ Đã xác định trạng thái: {context.get('diagnosis_status')}")
+            break  # Khớp 1 luật phân loại là đủ, thoát vòng lặp phẳng
+        
     # BƯỚC 4: KIỂM TRA THỂ TỐI CẤP (STEP8)
 
     # print("\n[BƯỚC 4] Kiểm tra thể tối cấp...")
