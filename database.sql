@@ -163,11 +163,11 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'if "Thần kinh" not in complication_type: complication_type.append("Thần kinh"); priority_level = "1"; recommended_next_step.append("Hồi sức tích cực – chuyển tuyến chuyên sâu. ");'),
 
 ('R2.3.3', 990, 'Complication', 
-'(heart_rate > 150) or (heart_rate < 40) or (capillary_refill_time > 2) or (mottled_skin == 1) or (sweating == 1)', 
+'(heart_rate > 150) or ((heart_rate or 100) < 40) or (capillary_refill_time > 2) or (mottled_skin == 1) or (sweating == 1)', 
 'if "Tim mạch" not in complication_type: complication_type.append("Tim mạch"); priority_level = "1"; recommended_next_step.append("Theo dõi huyết động, cảnh báo sốc. ");'),
 
 ('R2.3.4', 985, 'Complication', 
-'(respiratory_distress == 1) or (respiratory_rate > 50) or (respiratory_rate < 10) or (respiratory_rate_high == 1) or (spo2 < 94) or (stridor == 1) or (apnea_gasping == 1)', 
+'(respiratory_distress == 1) or (respiratory_rate > 50) or ((respiratory_rate or 25) < 10) or (respiratory_rate_high == 1) or (spo2 < 94) or (stridor == 1) or (apnea_gasping == 1)', 
 'if "Hô hấp" not in complication_type: complication_type.append("Hô hấp"); priority_level = "1"; recommended_next_step.append("Thở oxy, theo dõi sát, chuẩn bị đặt nội khí quản nếu xấu. ");'),
 
 ('R2.3.5', 980, 'Complication', 
@@ -250,11 +250,11 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'current_grade = "Độ 4"; priority_level = "1"; oxygen_support = True;'),
 
 ('G3', 190, 'Grading', 
-'(heart_rate > 170 and fever == 0) or (heart_rate > (170 + max(0, fever_temp - 38) * 10) and fever == 1) or (age_months < 12 and systolic_bp >= 100) or (age_months >= 12 and age_months < 24 and systolic_bp >= 110) or (age_months >= 24 and systolic_bp >= 115) or (respiratory_rate_high == 1) or (respiratory_distress == 1) or (stridor == 1) or (spo2 < 94.0) or (mottled_skin == 1) or (sweating == 1)', 
+'(heart_rate > 170 and fever == 0) or (heart_rate > (170 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (age_months < 12 and systolic_bp >= 100) or (age_months >= 12 and age_months < 24 and systolic_bp >= 110) or (age_months >= 24 and systolic_bp >= 115) or (respiratory_rate_high == 1) or (respiratory_distress == 1) or (stridor == 1) or (spo2 < 94.0) or (mottled_skin == 1) or (sweating == 1)', 
 'current_grade = "Độ 3"; oxygen_support = True;'),
 
 ('G2B2', 185, 'Grading', 
-'((mouth_ulcer == 1 or skin_rash == 1) and fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, fever_temp - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"])', 
+'((mouth_ulcer == 1 or skin_rash == 1) and fever_temp >= 39.0 and fever_refractory == 1) or (heart_rate > 150 and fever == 0) or (heart_rate > (150 + max(0, (fever_temp or 38) - 38) * 10) and fever == 1) or (ataxia == 1) or (nystagmus == 1) or (squint == 1) or (limb_weakness == 1) or (cranial_nerve_palsy == 1) or (muscle_tone_increased == 1) or (coma_gcs < 10) or (avpu_score in ["P"])', 
 'current_grade = "Độ 2b (Nhóm 2)"; if "Thần kinh" not in complication_type: complication_type.append("Thần kinh");'),
 
 ('G2B1', 180, 'Grading', 
@@ -273,11 +273,11 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- BƯỚC 7: CHỈ ĐỊNH CẬN LÂM SÀNG (Priority: 100-80)
 -- =====================================================
 ('L2.5.1', 100, 'Lab', 
-'current_grade in ("Độ 2a", "Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4")', 
+'current_grade in ["Độ 2a", "Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4"]', 
 'lab_orders.append("Xét nghiệm Công thức máu: Theo dõi bạch cầu và tiểu cầu. ");'),
 
 ('L2.5.2', 90, 'Lab', 
-'current_grade in ("Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4")', 
+'current_grade in ["Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4"]', 
 'lab_orders.append("Chỉ định đo đường huyết, điện giải đồ, X-quang phổi. Lấy mẫu xét nghiệm vi rút. ");'),
 
 ('L2.5.3', 80, 'Lab', 
@@ -296,7 +296,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 'treatment_location = "Bệnh viện huyện hoặc bệnh viện tư nhân"; transfer_needed = (current_facility_level == "Tuyến trạm y tế xã / Phòng khám tư nhân") ; recommended_next_step.append("Nhập viện để theo dõi sát vì cơ địa trẻ có nguy cơ chuyển nặng nhanh. ");'),
 
 ('T2.6.3', 40, 'Treatment', 
-'current_grade in ("Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4")', 
+'current_grade in ["Độ 2b (Nhóm 1)", "Độ 2b (Nhóm 2)", "Độ 3", "Độ 4"]', 
 'treatment_location = "Bệnh viện tỉnh hoặc Bệnh viện Nhi/Truyền nhiễm tuyến cuối"; transfer_needed = True ; priority_level = "1" ; recommended_next_step.append("Hồi sức tích cực, hội chẩn và chuyển tuyến an toàn nếu không đủ điều kiện. ")');
 
 COMMIT;

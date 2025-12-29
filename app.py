@@ -295,23 +295,35 @@ def run_python_inference(rules, context):
     for rule_type in rules_by_type:
         rules_by_type[rule_type].sort(key=lambda x: x['priority'], reverse=True)
 
-    def execute_rule(rule):
-        """Thực thi một luật"""
+    def execute_rule(rule): # Bỏ context và globals_dict ở đây
+        if not rule: return False
+        
         cond = str(rule['condition_if']).replace('\xa0', ' ').strip()
         cond = cond.replace('AND', 'and').replace('OR', 'or')
-        cond = re.sub(r'IN\s*\((.*?)\)', r'in [\1]', cond, flags=re.IGNORECASE)
-        
+
+        # Tạo safe_context để tính toán hiệu áp (pulse_pressure)
+        # nhưng vẫn giữ các giá trị khác là None để tránh trigger luật sai
+        safe_ctx = context.copy()
+        if safe_ctx.get('systolic_bp') is not None and safe_ctx.get('diastolic_bp') is not None:
+            safe_ctx['pulse_pressure'] = safe_ctx['systolic_bp'] - safe_ctx['diastolic_bp']
+
         try:
-            if eval(cond, globals_dict, context):
+            # Truy cập trực tiếp globals_dict từ hàm cha
+            if eval(cond, globals_dict, safe_ctx):
                 print(f"✅ Luật {rule['rule_id']} THỎA MÃN")
                 actions = rule['action_then'].split(';')
                 for action in actions:
                     act_strip = action.strip()
                     if act_strip:
+                        # Thực thi trên context gốc
                         exec(act_strip, globals_dict, context)
                 return True
+        except TypeError:
+            # Bắt lỗi khi so sánh số với None (ví dụ: None > 150)
+            # Không làm gì cả, coi như luật không thỏa mãn do thiếu dữ liệu
+            return False
         except Exception as e:
-            print(f"⚠️ Lỗi tại luật {rule['rule_id']}: {e}")
+            print(f"⚠️ Lỗi cú pháp luật {rule['rule_id']}: {e}")
         return False
 
     # ============ QUY TRÌNH SUY DIỄN ============
@@ -454,7 +466,7 @@ def save_to_db(conn, ctx):
             """
             cursor.execute(sql_ca, (
                 p_id, ctx.get('fever', 0), ctx.get('fever_temp', 0),
-                ctx.get('fever_duration_days', 0), ctx.get('fever_refractory', 0),
+                ctx.get('fever_duration_days', 1), ctx.get('fever_refractory', 0),
                 ctx.get('mouth_ulcer', 0), ctx.get('ulcer_characteristics'),
                 ctx.get('history_ulcer_recurrence', 0), ctx.get('skin_rash', 0),
                 ctx.get('skin_rash_location'), ctx.get('rash_type'),
@@ -478,10 +490,10 @@ def save_to_db(conn, ctx):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(sql_vsn, (
-                p_id, ctx.get('heart_rate', 0), ctx.get('respiratory_rate', 0),
-                ctx.get('respiratory_distress', 0), ctx.get('systolic_bp', 0),
-                ctx.get('diastolic_bp', 0), ctx.get('pulse_pressure', 0),
-                ctx.get('unmeasurable_bp_pulse', 0), ctx.get('capillary_refill_time', 0),
+                p_id, ctx.get('heart_rate', 100), ctx.get('respiratory_rate', 25),
+                ctx.get('respiratory_distress', 0), ctx.get('systolic_bp', 95),
+                ctx.get('diastolic_bp', 65), ctx.get('pulse_pressure', 30),
+                ctx.get('unmeasurable_bp_pulse', 0), ctx.get('capillary_refill_time', 2),
                 ctx.get('spo2', 100), ctx.get('apnea_gasping', 0),
                 ctx.get('cyanosis', 0), ctx.get('mottled_skin', 0),
                 ctx.get('sweating', 0), ctx.get('startle_reflex_history', 0),
@@ -547,19 +559,18 @@ def diagnose():
     l = data.get('lab', {})
 
     def to_int(val):
-        if val is None or val == '': return None
-        try:
-            return int(val)
-        except:
-            return None
+        if val is None or str(val).strip() == '': return None
+        try: return int(val)
+        except: return None
 
     def to_float(val):
-        if val is None or val == '': return None
-        try:
-            return float(val)
-        except:
-            return None
+        if val is None or str(val).strip() == '': return None
+        try: return float(val)
+        except: return None
+
     # KHỞI TẠO CONTEXT
+    # Lấy giá trị sốt trước
+    has_fever = int(c.get('fever', 0) or 0)
     ctx = {
         'full_name': p.get('full_name', 'N/A'),
         'age_months': to_int(p.get('age_months')) ,
@@ -567,10 +578,9 @@ def diagnose():
         'epidemiology_contact': int(p.get('epidemiology_contact', 0) or 0),
         'has_comorbidities': int(p.get('has_comorbidities', 0) or 0),
         'comorbidities_detail': p.get('comorbidities_detail', ''),
-
         'fever': int(c.get('fever', 0) or 0),
-        'fever_temp': to_float(c.get('fever_temp')),
-        'fever_duration_days': int(c.get('fever_duration_days', 1) or 0),
+        'fever_temp': to_float(c.get('fever_temp')) if has_fever == 1 else None,
+        'fever_duration_days': to_int(c.get('fever_duration_days')) if has_fever == 1 else None,
         'fever_refractory': int(c.get('fever_refractory', 0) or 0),
         'mouth_ulcer': int(c.get('mouth_ulcer', 0) or 0),
         'ulcer_characteristics': c.get('ulcer_characteristics', 'Typical'),
@@ -600,7 +610,7 @@ def diagnose():
         'diastolic_bp': to_int(v.get('diastolic_bp')),
         'pulse_pressure': to_int(v.get('pulse_pressure')),
         'unmeasurable_bp_pulse': int(v.get('unmeasurable_bp_pulse', 0) or 0),
-        'capillary_refill_time': int(v.get('capillary_refill_time', 0) or 0),
+        'capillary_refill_time': to_int(v.get('capillary_refill_time')),
         'mottled_skin': int(v.get('mottled_skin', 0) or 0),
         'sweating': int(v.get('sweating', 0) or 0),
         'cyanosis': int(v.get('cyanosis', 0) or 0),
