@@ -299,7 +299,7 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- =====================================================
 ('T2.6.1', 50, 'Treatment', 
 'current_grade == "Độ 1" and age_months >= 12 and has_comorbidities == 0', 
-'treatment_location = "Ngoại trú (Tại nhà /Trạm y tế)"; transfer_needed = False; recommended_next_step.append(" Tái khám mỗi 1–2 ngày, dặn dấu hiệu chuyển nặng. ");'),
+'treatment_location = "Ngoại trú (Tại nhà /Trạm y tế)"; transfer_needed = False; recommended_next_step.append(" Tái khám mỗi 1–2 ngày, chú ý dấu hiệu chuyển nặng. ");'),
 
 ('T2.6.2', 45, 'Treatment', 
 'current_grade == "Độ 2a" or (current_grade == "Độ 1" and (age_months < 12 or has_comorbidities == 1))', 
