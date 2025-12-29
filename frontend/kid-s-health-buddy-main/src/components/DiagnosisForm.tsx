@@ -312,7 +312,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
     symptoms: {
       fever: false,
       fever_temp: 39,
-      fever_duration_days: undefined,
+      fever_duration_days: 1,
       fever_refractory: false,
       symptom_progression_speed: 'Normal',
       mouth_ulcer: false,
@@ -442,8 +442,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
             ulcer_characteristics: formData.symptoms.ulcer_characteristics,
             history_ulcer_recurrence: formData.symptoms.history_ulcer_recurrence ? 1 : 0,
             skin_rash: formData.symptoms.skin_rash ? 1 : 0,
-            skin_rash_location: Array.isArray(formData.symptoms.skin_rash_location) ? formData.symptoms.skin_rash_location[0] : formData.symptoms.skin_rash_location,
-            rash_type: formData.symptoms.rash_type,
+            skin_rash_location: formData.symptoms.skin_rash_location || '',
             rash_itchiness: formData.symptoms.rash_itchiness ? 1 : 0,
             rash_stages: formData.symptoms.rash_stages,
             skin_rash_pain: formData.symptoms.skin_rash_pain ? 1 : 0,
@@ -670,10 +669,18 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                   </SelectContent>
                 </Select>
                 <Label className="text-[10px] font-bold">Vị trí ban:</Label>
-                <Select value={formData.symptoms.skin_rash_location} onValueChange={v => updateSymptom('skin_rash_location', [v])}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Chọn vị trí chính" /></SelectTrigger>
+                <Select 
+                  // Nếu formData trống thì lấy giá trị mặc định này để hiển thị
+                  value={formData.symptoms.skin_rash_location || 'Lòng bàn tay, chân, gối, khuỷu, mông'} 
+                  onValueChange={v => updateSymptom('skin_rash_location', v)}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue /> 
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Lòng bàn tay, chân, gối, khuỷu, mông">Lòng bàn tay, chân, gối, khuỷu, mông</SelectItem>
+                    <SelectItem value="Lòng bàn tay, chân, gối, khuỷu, mông">
+                      Lòng bàn tay, chân, gối, khuỷu, mông (Điển hình)
+                    </SelectItem>
                     <SelectItem value="Toàn thân">Toàn thân</SelectItem>
                   </SelectContent>
                 </Select>
@@ -788,7 +795,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
                 <SelectContent><SelectItem value="NotDone">Chưa làm</SelectItem><SelectItem value="Positive">Positive</SelectItem><SelectItem value="Negative">Negative</SelectItem></SelectContent>
               </Select>
             </div>
-            <div className="space-y-1"><Label className="text-[10px] font-bold">Phân lập Virus (Nuôi cấy)</Label>
+            <div className="space-y-1"><Label className="text-[10px] font-bold">Phân lập Virus (Nuôi cấy) thuộc họ Enterovirus</Label>
               <Select value={formData.labTests.viral_isolation_result} onValueChange={v => updateLab('viral_isolation_result', v)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="NotDone">Chưa làm</SelectItem><SelectItem value="Positive">Positive</SelectItem><SelectItem value="Negative">Negative</SelectItem></SelectContent>

@@ -26,6 +26,7 @@ CREATE TABLE `ClinicalAssessment` (
   `fever` tinyint(1) DEFAULT 0,
   `fever_temp` float DEFAULT NULL,
   `fever_duration_days` int(11) DEFAULT NULL,
+  CONSTRAINT `chk_fever_days` CHECK ((`fever`= 0 and `fever_duration_days` IS NULL AND `fever_temp` IS NULL) or (`fever` = 1 and `fever_duration_days` >= 1)),
   `fever_refractory` tinyint(1) DEFAULT 0,
   `symptom_progression_speed` varchar(20) DEFAULT 'Normal',
   `mouth_ulcer` tinyint(1) DEFAULT 0,
@@ -177,31 +178,31 @@ INSERT INTO `rule_base` (`rule_id`, `priority`, `rule_type`, `condition_if`, `ac
 -- BƯỚC 2: PHÂN BIỆT BỆNH KHÁC (Priority: 900-850) - DỪNG CHƯƠNG TRÌNH
 -- =====================================================
 ('R2.2.1', 907, 'Differential', 
-'mouth_ulcer == 1 and skin_rash == 0 and ulcer_characteristics == "Atypical" and history_ulcer_recurrence == 1', 
+'mouth_ulcer == 1 and skin_rash == 0 and ulcer_characteristics == "Atypical" and history_ulcer_recurrence == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Ap-tơ"; stop_program = True;'),
 
 ('R2.2.2', 906, 'Differential', 
-'skin_rash == 1 and rash_type == "Phỏng nước điển hình" and skin_rash_location == "Toàn thân" and rash_stages == "Nhiều độ tuổi" and rash_itchiness == 1', 
+'skin_rash == 1 and rash_type == "Phỏng nước điển hình" and skin_rash_location == "Toàn thân" and rash_stages == "Nhiều độ tuổi" and rash_itchiness == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Thủy đậu"; stop_program = True;'),
 
 ('R2.2.3', 905, 'Differential', 
-'skin_rash == 1 and (rash_type == "Chấm xuất huyết" or rash_type == "Bầm máu") and fever_temp >= 39.0 and mucosal_bleeding == 1', 
+'skin_rash == 1 and (rash_type == "Chấm xuất huyết" or rash_type == "Bầm máu") and fever_temp >= 39.0 and mucosal_bleeding == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt xuất huyết"; stop_program = True;'),
 
 ('R2.2.4', 904, 'Differential', 
-'skin_rash == 1 and rash_type == "Hoại tử trung tâm" and fever_temp >= 39.0 and symptom_progression_speed == "Very Fast"', 
+'skin_rash == 1 and rash_type == "Hoại tử trung tâm" and fever_temp >= 39.0 and symptom_progression_speed == "Very Fast" and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Nhiễm khuẩn huyết do não mô cầu"; stop_program = True;'),
 
 ('R2.2.5', 903, 'Differential', 
-'skin_rash == 1 and rash_type == "Mụn mủ" and skin_rash_pain == 1', 
+'skin_rash == 1 and rash_type == "Mụn mủ" and skin_rash_pain == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Viêm da mủ"; stop_program = True;'),
 
 ('R2.2.6', 902, 'Differential', 
-'skin_rash == 1 and rash_type == "Hồng ban và sần" and post_auricular_lymph_nodes == 1', 
+'skin_rash == 1 and rash_type == "Hồng ban và sần" and post_auricular_lymph_nodes == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Sốt phát ban"; stop_program = True;'),
 
 ('R2.2.7', 901, 'Differential', 
-'skin_rash == 1 and rash_type == "Hồng ban đa dạng" and rash_itchiness == 1', 
+'skin_rash == 1 and rash_type == "Hồng ban đa dạng" and rash_itchiness == 1 and ev71_result != "Positive" and other_enterovirus_result != "Positive" and viral_isolation_result != "Positive"', 
 'diagnosis_status = "Nghi ngờ bệnh khác"; differential_alert = "Dị ứng da"; stop_program = True;'),
 
 -- =====================================================
