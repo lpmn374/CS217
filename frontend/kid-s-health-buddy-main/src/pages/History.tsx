@@ -421,13 +421,24 @@ export default function History() {
 
   useEffect(() => { loadHistory(); }, []);
 
+  // Tìm đoạn này:
   const filteredHistory = useMemo(() => {
     return history.filter(record => {
       const nameMatch = record.name?.toLowerCase().includes(searchQuery.toLowerCase());
-      const gradeMatch = gradeFilter === 'all' || (record.grade && record.grade.includes(gradeFilter));
+      
+      // XÓA DÒNG CŨ NÀY:
+      // const gradeMatch = gradeFilter === 'all' || (record.grade && record.grade.includes(gradeFilter));
+      
+      // CHÈN ĐOẠN MỚI NÀY VÀO:
+      const gradeMatch = gradeFilter === 'all' 
+        ? true 
+        : gradeFilter === 'group_2' 
+          ? record.grade?.startsWith('Độ 2') 
+          : record.grade === gradeFilter;
+
       return nameMatch && gradeMatch;
     });
-  }, [history, searchQuery, gradeFilter]);
+}, [history, searchQuery, gradeFilter]);
 
   const handleDelete = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
@@ -478,8 +489,11 @@ export default function History() {
             <SelectTrigger className="w-full sm:w-56"><SelectValue placeholder="Lọc theo phân độ" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả phân độ</SelectItem>
+              <SelectItem value="group_2">Tất cả Độ 2</SelectItem>
               <SelectItem value="Độ 1">Độ 1</SelectItem>
-              <SelectItem value="Độ 2">Độ 2 (a & b)</SelectItem>
+              <SelectItem value="Độ 2a">Độ 2a</SelectItem>
+              <SelectItem value="Độ 2b (Nhóm 1)">Độ 2b - Nhóm 1</SelectItem>
+              <SelectItem value="Độ 2b (Nhóm 2)">Độ 2b - Nhóm 2</SelectItem>
               <SelectItem value="Độ 3">Độ 3</SelectItem>
               <SelectItem value="Độ 4">Độ 4</SelectItem>
             </SelectContent>
