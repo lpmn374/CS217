@@ -444,7 +444,8 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
             skin_rash: formData.symptoms.skin_rash ? 1 : 0,
             skin_rash_location: formData.symptoms.skin_rash_location || '',
             rash_itchiness: formData.symptoms.rash_itchiness ? 1 : 0,
-            rash_stages: formData.symptoms.rash_stages,
+            rash_stages: formData.symptoms.rash_stages || '',
+            rash_type: formData.symptoms.rash_type || '',
             skin_rash_pain: formData.symptoms.skin_rash_pain ? 1 : 0,
             post_auricular_lymph_nodes: formData.symptoms.post_auricular_lymph_nodes ? 1 : 0,
             mucosal_bleeding: formData.symptoms.mucosal_bleeding ? 1 : 0,
@@ -656,7 +657,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
             <div className="space-y-3 pl-4 border-l-2 border-green-100 animate-in slide-in-from-left-2">
               <div className="space-y-1">
                 <Label className="text-[10px] font-bold">Dạng ban & Tính chất</Label>
-                <Select value={formData.symptoms.rash_type} onValueChange={v => updateSymptom('rash_type', v)}>
+                <Select value={formData.symptoms.rash_type || "Phỏng nước điển hình"} onValueChange={v => updateSymptom('rash_type', v)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Phỏng nước điển hình">Phỏng nước điển hình (Mụn nước)</SelectItem>
@@ -691,7 +692,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
               </div>
               <div className="flex items-center justify-between">
                 <Label className="text-[11px] font-bold">Độ tuổi ban</Label>
-                <Select value={formData.symptoms.rash_stages} onValueChange={v => updateSymptom('rash_stages', v)}>
+                <Select value={formData.symptoms.rash_stages || "Đồng đều"} onValueChange={v => updateSymptom('rash_stages', v)}>
                   <SelectTrigger className="w-28 h-7 text-[10px]"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="Đồng đều">Đồng đều</SelectItem><SelectItem value="Nhiều độ tuổi">Nhiều độ tuổi</SelectItem></SelectContent>
                 </Select>
