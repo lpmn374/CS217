@@ -132,6 +132,7 @@ CREATE TABLE `DiagnosticOutput` (
   `differential_alert` text DEFAULT NULL,
   `recommended_next_step` text DEFAULT NULL,
   PRIMARY KEY (`output_id`),
+  CONSTRAINT `fk_output_grading` FOREIGN KEY (`current_grade`) REFERENCES `HFMDGrading` (`current_grade`) ON DELETE CASCADE
   CONSTRAINT `fk_output_patient` FOREIGN KEY (`patient_id`) REFERENCES `Patient` (`patient_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
