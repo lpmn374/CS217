@@ -346,7 +346,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
       capillary_refill_time: 2,
       respiratory_rate_high: false,
       cranial_nerve_palsy: false,
-      stridor: false,
+      // stridor: false,
       spo2: 98,
       apnea_gasping: false,
       cyanosis: false,
@@ -468,7 +468,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
             unmeasurable_bp_pulse: formData.vitals.unmeasurable_bp_pulse ? 1 : 0,
             respiratory_rate_high: formData.vitals.respiratory_rate_high ? 1 : 0,
             respiratory_distress: formData.vitals.respiratory_distress ? 1 : 0,
-            stridor: formData.vitals.stridor ? 1 : 0,
+            // stridor: formData.vitals.stridor ? 1 : 0,
             apnea_gasping: formData.vitals.apnea_gasping ? 1 : 0,
             cyanosis: formData.vitals.cyanosis ? 1 : 0,
             mottled_skin: formData.vitals.mottled_skin ? 1 : 0,
@@ -725,14 +725,11 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
           <div className="bg-red-50 p-3 rounded-lg space-y-1 border border-red-100">
             <SymptomToggle label="Mạch/HA không đo được" checked={formData.vitals.unmeasurable_bp_pulse} onChange={v => updateVital('unmeasurable_bp_pulse', v)} />
             <SymptomToggle label="Thở nhanh bất thường" checked={formData.vitals.respiratory_rate_high} onChange={v => updateVital('respiratory_rate_high', v)} />
-            <SymptomToggle label="Suy hô hấp (Khó thở, co kéo ngực,...)" checked={formData.vitals.respiratory_distress} onChange={v => updateVital('respiratory_distress', v)} />
-            <div className="grid grid-cols-1 gap-0.5 border-t border-red-200 pt-1 mt-1">
-               <SymptomToggle label="Thở rít thanh quản" checked={formData.vitals.stridor} onChange={v => updateVital('stridor', v)} />
-               <SymptomToggle label="Ngưng thở / Thở dốc" checked={formData.vitals.apnea_gasping} onChange={v => updateVital('apnea_gasping', v)} />
-               <SymptomToggle label="Tím tái (Môi/Đầu chi)" checked={formData.vitals.cyanosis} onChange={v => updateVital('cyanosis', v)} />
-               <SymptomToggle label="Da nổi bông" checked={formData.vitals.mottled_skin} onChange={v => updateVital('mottled_skin', v)} />
-               <SymptomToggle label="Vã mồ hôi" checked={formData.vitals.sweating} onChange={v => updateVital('sweating', v)} />
-            </div>
+            <SymptomToggle label="Suy hô hấp (Gồm một hoặc nhiều: khó thở, co kéo ngực, rút lõm ngực, khò khè, thở rít, thở nông, thở bụng, thở không đều,...)" checked={formData.vitals.respiratory_distress} onChange={v => updateVital('respiratory_distress', v)} />
+            <SymptomToggle label="Ngưng thở / Thở dốc" checked={formData.vitals.apnea_gasping} onChange={v => updateVital('apnea_gasping', v)} />
+            <SymptomToggle label="Tím tái (Môi/Đầu chi)" checked={formData.vitals.cyanosis} onChange={v => updateVital('cyanosis', v)} />
+            <SymptomToggle label="Da nổi bông" checked={formData.vitals.mottled_skin} onChange={v => updateVital('mottled_skin', v)} />
+            <SymptomToggle label="Vã mồ hôi" checked={formData.vitals.sweating} onChange={v => updateVital('sweating', v)} />            
           </div>
         </CardContent>
       </Card>
@@ -743,7 +740,7 @@ export function DiagnosisForm({ onSubmit, isLoading }: DiagnosisFormProps) {
         <CardContent className="space-y-4">
           <div className="bg-purple-50 p-2 rounded border border-purple-100">
             <div className="flex items-center justify-between mb-2">
-              <Label className="text-xs font-bold text-purple-900">Giật mình (lần/30p)</Label>
+              <Label className="text-xs font-bold text-purple-900">Giật mình (lần/30 phút)</Label>
               <Input type="number" min="0" className="w-16 h-8 border-purple-300" value={formData.vitals.startle_reflex_history} onChange={e => updateVital('startle_reflex_history', parseInt(e.target.value) || 0)} />
             </div>
             <SymptomToggle label="Giật mình ghi nhận lúc khám" checked={formData.vitals.startle_reflex_exam} onChange={v => updateVital('startle_reflex_exam', v)} />

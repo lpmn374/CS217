@@ -266,7 +266,7 @@ export interface Vitals {
   unmeasurable_bp_pulse: boolean;
   capillary_refill_time: number;
   respiratory_rate_high: boolean;
-  stridor: boolean;
+  // stridor: boolean;
   spo2: number;
   coma_gcs: number;
   avpu_score: 'A' | 'V' | 'P' | 'U';
