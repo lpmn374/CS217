@@ -192,7 +192,8 @@ const Index = () => {
       const isDifferential = !!diagnosisResult?.differential_alert;
       
       // Kiểm tra mức độ nghiêm trọng
-      const currentGrade = diagnosisResult?.current_grade || "";
+      // SỬA: Thêm .result vào trước current_grade
+      const currentGrade = diagnosisResult?.result?.current_grade || "";
       const isCritical = ['Độ 3', 'Độ 4'].some(g => currentGrade.includes(g));
       const isWarning = currentGrade.includes('2b') || currentGrade.includes('2a');
 
@@ -342,7 +343,7 @@ const Index = () => {
             
             <div className="space-y-8">
                 {/* 1. HIỂN THỊ TÓM TẮT KẾT QUẢ */}
-                <DiagnosisResultDisplay result={result} />
+                <DiagnosisResultDisplay result={result.result} />
 
                 {/* 2. HIỂN THỊ CÂY SUY DIỄN ĐÃ GỘP NHÓM */}
                 <Card className="shadow-xl border-t-4 border-t-slate-800">

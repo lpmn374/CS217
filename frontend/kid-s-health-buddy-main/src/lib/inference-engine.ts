@@ -344,46 +344,36 @@ const API_BASE_URL = 'http://127.0.0.1:5000';
  * ✅ SỬA: Nhận data đã được chuyển đổi từ DiagnosisForm
  * Không còn tự chuyển đổi nữa vì DiagnosisForm đã làm rồi
  */
-export async function runInference(dataToSend: any): Promise<DiagnosisResult> {
+export async function runInference(dataToSend: any): Promise<any> {
   try {
-    console.log("🚀 Data gửi đến Backend:", dataToSend);
-
     const response = await fetch(`${API_BASE_URL}/diagnose`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataToSend) // ✅ Gửi data đã được chuyển đổi từ Form
+      body: JSON.stringify(dataToSend)
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Backend error:", errorText);
-      throw new Error('Lỗi kết nối Backend');
-    }
-    
-    const result = await response.json();
-    console.log("✅ Kết quả từ Backend:", result);
-    
-    // Đảm bảo các trường danh sách không bao giờ null
+    const data = await response.json();
+    console.log("✅ Dữ liệu thô từ Backend:", data);
+
+    // Chuẩn hóa phần 'result' bên trong
+    const core = data.result;
+    const normalizedResult = {
+      ...core,
+      // Đảm bảo các trường là mảng để không bị lỗi .map() ở UI
+      complication_type: Array.isArray(core.complication_type) ? core.complication_type : [],
+      lab_orders: Array.isArray(core.lab_orders) ? core.lab_orders : [],
+      recommended_next_step: Array.isArray(core.recommended_next_step) 
+        ? core.recommended_next_step.join(' ') 
+        : (core.recommended_next_step || ''),
+      isClinicalCase: core.diagnosis_status !== 'Không mắc bệnh/Theo dõi thêm'
+    };
+
+    // TRẢ VỀ CẤU TRÚC 2 PHẦN TÁCH BIỆT
     return {
-      ...result,
-      complication_type: Array.isArray(result.complication_type) 
-        ? result.complication_type 
-        : (result.complication_type ? result.complication_type.split(', ') : []),
-      lab_orders: Array.isArray(result.lab_orders) 
-        ? result.lab_orders 
-        : (result.lab_orders ? result.lab_orders.split(', ') : []),
-      recommended_next_step: Array.isArray(result.recommended_next_step) 
-        ? result.recommended_next_step.join(' ') 
-        : (result.recommended_next_step || ''),
-      // Thêm alias cho compatibility với UI cũ
-      treatment: Array.isArray(result.recommended_next_step) 
-        ? result.recommended_next_step.join(' ') 
-        : (result.recommended_next_step || ''),
-      isClinicalCase: result.diagnosis_status !== 'Không mắc bệnh/Theo dõi thêm',
-      resultGrade: result.current_grade
+      result: normalizedResult,
+      inference_trace: data.inference_trace
     };
   } catch (error) {
-    console.error("❌ Inference Error:", error);
     throw error;
   }
 }
