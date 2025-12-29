@@ -354,18 +354,12 @@ def run_python_inference(rules, context):
         diagnosis_rules = [r for r in rules_by_type['Diagnosis'] 
                           if r['rule_id'] in ['R_STEP4', 'R_STEP5', 'R_STEP6', 'R_STEP7']]
     
-    case_classified = False
+    case_found = False
     for rule in diagnosis_rules:
         if execute_rule(rule):
-            case_classified = True
+            case_found = True
             print(f"→ Phân loại: {context.get('diagnosis_status')} - {context.get('clinical_form')}")
             break
-    
-    if not case_classified:
-        print("→ KHÔNG MẮC BỆNH TCM")
-        context['diagnosis_status'] = "Không mắc bệnh/Theo dõi thêm"
-        context['current_grade'] = "Không phân độ"
-        return True  # Dừng
     
     # BƯỚC 4: KIỂM TRA THỂ TỐI CẤP (STEP8)
     print("\n[BƯỚC 4] Kiểm tra thể tối cấp...")
@@ -382,6 +376,13 @@ def run_python_inference(rules, context):
         if step9_rule:
             if execute_rule(step9_rule[0]):
                 print(f"→ Cập nhật: {context.get('diagnosis_status')}")
+                case_found = True
+    
+    if not case_found:
+        print("→ KHÔNG MẮC BỆNH TCM")
+        context['diagnosis_status'] = "Không mắc bệnh/Theo dõi thêm"
+        context['current_grade'] = "Không phân độ"
+        return True  # Dừng
     
     # BƯỚC 6: PHÂN ĐỘ
     print("\n[BƯỚC 6] Phân độ bệnh...")
