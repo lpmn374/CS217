@@ -33,7 +33,7 @@
   <br><br>
 
   <p><i>Kết quả phân độ và hướng dẫn xử trí tự động</i></p>
-  <img src="đường-link-hình-ảnh-2.png" width="100%" alt="Kết quả phân độ" />
+  <img width="100%" alt="Kết quả phân độ" src="https://github.com/user-attachments/assets/9cb66465-44db-4104-b616-9c0fe44047e2" />
 </div>
 
 > [!TIP]
