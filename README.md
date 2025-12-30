@@ -23,7 +23,18 @@
 * **Lưu trữ đa tầng:** Quản lý dữ liệu qua **7 bảng liên kết**.
 * **Xóa thông minh:** Sử dụng cơ chế **`ON DELETE CASCADE`** để bảo mật dữ liệu.
 
+## 📸 GIAO DIỆN ỨNG DỤNG (PREVIEW)
 
+<div align="center">
+  <p><b>Giao diện chẩn đoán thông minh - Trực quan & Dễ sử dụng</b></p>
+  <img src="<img width="1396" height="896" alt="image" src="https://github.com/user-attachments/assets/0b55ce4a-b4b1-426d-8e96-0d0a6cac83a4" />
+" alt="Trang chủ chẩn đoán" />
+  <br>
+  <img src="đường-link-hình-ảnh-2.png" width="800px" alt="Kết quả phân độ" />
+</div>
+
+> [!TIP]
+> Hệ thống hỗ trợ nhập liệu nhanh các chỉ số sinh hiệu và tự động đối soát với bộ luật y khoa để đưa ra kết quả tức thì.
 
 # 🛠️ **HƯỚNG DẪN CÀI ĐẶT (SETUP GUIDE)**
 
