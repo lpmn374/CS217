@@ -27,10 +27,13 @@
 
 <div align="center">
   <p><b>Giao diện chẩn đoán thông minh - Trực quan & Dễ sử dụng</b></p>
-  <img src="<img width="1396" height="896" alt="image" src="https://github.com/user-attachments/assets/0b55ce4a-b4b1-426d-8e96-0d0a6cac83a4" />
-" alt="Trang chủ chẩn đoán" />
-  <br>
-  <img src="đường-link-hình-ảnh-2.png" width="800px" alt="Kết quả phân độ" />
+  
+  <img width="100%" alt="Giao diện nhập liệu chi tiết" src="https://github.com/user-attachments/assets/0b55ce4a-b4b1-426d-8e96-0d0a6cac83a4" />
+  
+  <br><br>
+
+  <p><i>Kết quả phân độ và hướng dẫn xử trí tự động</i></p>
+  <img src="đường-link-hình-ảnh-2.png" width="100%" alt="Kết quả phân độ" />
 </div>
 
 > [!TIP]
